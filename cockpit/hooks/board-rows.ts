@@ -42,5 +42,12 @@ export function boardRows(m: Model, t: Theme, w: number, lead: string): Seg[][] 
       else rows.push(...para({ text: `· ${p.n}. `, color: c.dim }, p.title, c.dim, false, 2))
     }
   }
+  // 새 계획에 밀려난 이전 계획: 무엇이 끝났고 무엇이 남았는지만 흐리게 보여 준다
+  const prev = m.planPrev
+  if (prev) {
+    rows.push([], [{ text: `${lead}이전 계획 · 완료 ${prev.done}/${prev.total}`, color: c.dim, bold: true }])
+    rows.push(...para({ text: '', color: c.dim }, prev.goal, c.dim, false, 2))
+    rows.push(...para({ text: '남은: ', color: c.dim }, prev.left.join(', '), c.dim, false, 2))
+  }
   return rows.map(r => fit(r, w))
 }

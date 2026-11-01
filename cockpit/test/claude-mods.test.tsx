@@ -60,6 +60,43 @@ test('진행판: start로 순서를 건너뛰고, 없는 번호와 계획 없는
   expect((await progress($, { done: 4, note: 'x' })).deny).toMatch(/1~3/)
 })
 
+test('진행판: add는 목표와 완료 기록을 두고 뒤에 이어 붙이며, start와 같이 보내면 붙인 작업이 바로 진행 중이 된다', { timeoutMs: 20000 }, async ($, on) => {
+  boot(on)
+  await $.session.start({ cwd: '/fake/proj', surface: 'terminal', isInteractive: false })
+  await progress($, { goal: '검사', tasks: ['가', '나', '다'] })
+  await progress($, { done: 1, note: '이렇게 했다' })
+  expect((await progress($, { add: ['라'], start: 4 })).result).toBe('예정 1 · 진행 중 2 · 완료 1 (25%)')
+  const ui = await $.ui.mount(PANE)
+  expect(await ui.find({ text: /^검사$/ })).toBeDefined()
+  expect(await ui.find({ text: /▶ 4\. / })).toBeDefined()
+  expect(await ui.find({ text: /이렇게 했다/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('진행판: 안 끝난 계획을 tasks로 바꾸면 이전 계획 요약을 남기고, 다 끝난 계획을 바꾸면 요약을 지운다', { timeoutMs: 20000 }, async ($, on) => {
+  boot(on)
+  await $.session.start({ cwd: '/fake/proj', surface: 'terminal', isInteractive: false })
+  await progress($, { goal: '검사', tasks: ['가', '나', '다'] })
+  await progress($, { done: 1, note: '끝' })
+  const r = (await progress($, { goal: '새 일', tasks: ['새'] })).result as string
+  expect(r).toContain('이전 계획 "검사"의 안 끝난 작업 2개(나, 다)')
+  // add는 요약을 그대로 두고, 결과에 요약 안내를 다시 붙이지 않는다
+  expect((await progress($, { add: ['더'] })).result).toBe('예정 1 · 진행 중 1 · 완료 0 (0%)')
+  let ui = await $.ui.mount(PANE)
+  expect(await ui.find({ text: /^새 일$/ })).toBeDefined()
+  expect(await ui.find({ text: /이전 계획 · 완료 1\/3/ })).toBeDefined()
+  expect(await ui.find({ text: /^검사$/ })).toBeDefined()
+  expect(await ui.find({ text: /남은: 나, 다/ })).toBeDefined()
+  await ui.unmount()
+
+  await progress($, { done: 1, note: 'x' })
+  await progress($, { done: 2, note: 'x' })
+  expect((await progress($, { goal: '그다음', tasks: ['하나'] })).result).toBe('예정 0 · 진행 중 1 · 완료 0 (0%)')
+  ui = await $.ui.mount(PANE)
+  expect(await ui.find({ text: /이전 계획/ })).toBeUndefined()
+  await ui.unmount()
+})
+
 test('진행판: 하위 에이전트의 호출은 목록을 바꾸지 않는다', { timeoutMs: 20000 }, async ($, on) => {
   boot(on)
   await $.session.start({ cwd: '/fake/proj', surface: 'terminal', isInteractive: false })

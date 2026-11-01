@@ -11,6 +11,7 @@ export type GlowupModel = {
   agents: GlowupAgent[]
   plan: GlowupPlanItem[]
   planGoal?: string // claude-mods: 진행판 목표
+  planPrev?: GlowupPrev // claude-mods: 이전 계획 요약
   files: GlowupFileTouch[]
   ctxPercent: number
   needsYou?: { toolUseId: string; what: string; before: GlowupAct }
@@ -23,7 +24,8 @@ export type GlowupPaneView = {
   reduced?: boolean
 }
 // claude-mods: 진행판(hooks/board.tsx)과 이미지 미리보기(hooks/images.tsx)가 저장하는 값
-export type GlowupBoard = { goal: string; tasks: { title: string; note?: string; status: 'todo' | 'doing' | 'done' }[] }
+export type GlowupPrev = { goal: string; done: number; total: number; left: string[] }
+export type GlowupBoard = { goal: string; tasks: { title: string; note?: string; status: 'todo' | 'doing' | 'done' }[]; prev?: GlowupPrev }
 export type GlowupImage = { path: string; width?: number; height?: number }
 export type GlowupBubble = { text: string; mood: string; until: number }
 export type GlowupPetInput = { working: boolean; kind?: string; needsYou: boolean; lastTest?: { passed: boolean; at: number }; doneAt?: number; doneOk?: boolean; actAt?: number }

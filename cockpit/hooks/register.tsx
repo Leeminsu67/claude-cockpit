@@ -1049,7 +1049,7 @@ async function startBoard($: Engine) {
   try {
     await $.tool.register(BOARD_SPEC)
     const b = await read($, board)
-    if (b) feed($, { type: 'plan-load', plan: toPlan(b), goal: b.goal })
+    if (b) feed($, { type: 'plan-load', plan: toPlan(b), goal: b.goal, prev: b.prev })
   } catch (err) {
     // 진행판이 안 떠도 glowup 세션 시작은 막지 않는다
     $.ui.log(`progress board start failed: ${err instanceof Error ? err.message : String(err)}`, { to: 'debug' })
@@ -2124,10 +2124,10 @@ export const register: Register = (on, options) => {
     })
     if (error) return { deny: error }
     if (!next) return { deny: 'goal과 tasks로 계획을 먼저 올리세요.' }
-    feed($, { type: 'plan-load', plan: toPlan(next), goal: next.goal })
+    feed($, { type: 'plan-load', plan: toPlan(next), goal: next.goal, prev: next.prev })
     // /config '진행판 탭 열기': 요청마다(기본) 또는 처음 한 번
     if (input.tasks?.length && (options.planTab !== '처음 한 번' || !boardShown)) showBoard($)
-    return { result: summary(next) }
+    return { result: summary(next, !!input.tasks?.length) }
   }).catch(() => ({ deny: '진행판을 갱신하지 못했습니다.' }))
 
   // ── claude-mods ▲ ──

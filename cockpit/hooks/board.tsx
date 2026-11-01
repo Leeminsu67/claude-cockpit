@@ -9,12 +9,15 @@ export const BOARD_TOOL = 'mcp__cockpit__progress'
 
 export type Status = 'todo' | 'doing' | 'done'
 export type Task = { title: string; note?: string; status: Status }
-export type Board = { goal: string; tasks: Task[] }
-export type BoardInput = { goal?: string; tasks?: string[]; start?: number; done?: number; note?: string }
+// 안 끝난 작업이 남은 계획을 tasks로 바꿀 때 남기는 이전 계획 요약(한 단계만 기억한다)
+export type Prev = { goal: string; done: number; total: number; left: string[] }
+export type Board = { goal: string; tasks: Task[]; prev?: Prev }
+export type BoardInput = { goal?: string; tasks?: string[]; add?: string[]; start?: number; done?: number; note?: string }
 
 const RULE = `## 진행판
 사용자 화면 오른쪽 cockpit 패널의 Plan 탭에 진행판이 있다. 모든 요청에서 다른 도구를 쓰거나 답하기 전에 ${BOARD_TOOL} 도구로 goal(요청을 한 줄로 요약)과 tasks(작업 목록)를 먼저 올린다. 질문에 답만 하는 요청도 작업 1개로 올린다.
-작업은 예정 → 진행 중 → 완료로 바뀐다. 첫 작업은 올리자마자 진행 중이 되고, done(번호)과 note(무엇을 어떻게 했는지 한 줄)로 완료하면 다음 예정 작업이 진행 중이 된다. 순서를 건너뛸 때만 start(번호)로 진행 중을 직접 정한다. 계획이 바뀌면 tasks를 다시 올린다. 글은 한국어로 쓴다.`
+진행판에 안 끝난 작업이 남아 있는데 새 요청이 오면(작업 도중 끼어든 프롬프트 포함), 같은 일의 연장이거나 중간 질문이면 tasks 대신 add로 지금 계획 뒤에 붙인다. 붙인 작업부터 할 거면 같은 호출에 start로 그 번호를 넣는다. 전혀 다른 일로 넘어갈 때만 tasks로 새로 올린다.
+작업은 예정 → 진행 중 → 완료로 바뀐다. 첫 작업은 올리자마자 진행 중이 되고, done(번호)과 note(무엇을 어떻게 했는지 한 줄)로 완료하면 다음 예정 작업이 진행 중이 된다. 순서를 건너뛸 때만 start(번호)로 진행 중을 직접 정한다. 계획 자체가 바뀌면 tasks를 다시 올린다. 글은 한국어로 쓴다.`
 
 const setStatus = (tasks: Task[], n: number, status: Status, note?: string) =>
   tasks.map((t, i) => (i === n - 1 ? { ...t, status, ...(note !== undefined && { note }) } : t))
@@ -24,11 +27,23 @@ const advance = (tasks: Task[]) => {
   return tasks.some(t => t.status === 'doing') || next < 0 ? tasks : setStatus(tasks, next + 1, 'doing')
 }
 
+const todo = (titles: string[]) => titles.map(title => ({ title, status: 'todo' as const }))
+// 다 끝난 계획은 요약을 남기지 않는다
+const prevOf = (b: Board | null): Prev | undefined => {
+  const left = b?.tasks.filter(t => t.status !== 'done').map(t => t.title) ?? []
+  return b && left.length ? { goal: b.goal, done: b.tasks.length - left.length, total: b.tasks.length, left } : undefined
+}
+
 /** 도구 입력 하나를 계획에 적용한다. 거부할 때는 error에 이유를 담고 계획은 그대로 돌려준다 */
 export function applyProgress(prev: Board | null, input: BoardInput): { board: Board | null; error?: string } {
-  const { goal, tasks, start, done, note } = input
+  const { goal, tasks, add, start, done, note } = input
   let p = prev
-  if (tasks?.length) p = { goal: goal ?? '', tasks: advance(tasks.map(title => ({ title, status: 'todo' as const }))) }
+  if (tasks?.length) {
+    const was = prevOf(p)
+    p = { goal: goal ?? '', tasks: advance(todo(tasks)), ...(was && { prev: was }) }
+  }
+  // 이어 붙이기: 완료 기록과 이전 요약은 그대로 두고 뒤에 붙인다. start보다 먼저 해야 붙인 번호로 start할 수 있다
+  if (add?.length) p = { ...p, goal: goal ?? p?.goal ?? '', tasks: advance([...(p?.tasks ?? []), ...todo(add)]) }
   if (start === undefined && done === undefined) return { board: p }
   if (!p) return { board: p, error: '계획이 없습니다. 먼저 goal과 tasks를 올리세요.' }
   const bad = [start, done].find(n => n !== undefined && (!Number.isInteger(n) || n < 1 || n > p!.tasks.length))
@@ -39,10 +54,13 @@ export function applyProgress(prev: Board | null, input: BoardInput): { board: B
   return { board: { ...p, tasks: t } }
 }
 
-export function summary(b: Board) {
+/** replaced: 이번 호출이 tasks로 계획을 바꿨으면 이전 계획의 남은 작업을 모델에게도 알린다 */
+export function summary(b: Board, replaced = false) {
   const of = (s: Status) => b.tasks.filter(t => t.status === s).length
   const percent = Math.round((of('done') * 100) / b.tasks.length)
-  return `예정 ${of('todo')} · 진행 중 ${of('doing')} · 완료 ${of('done')} (${percent}%)`
+  const line = `예정 ${of('todo')} · 진행 중 ${of('doing')} · 완료 ${of('done')} (${percent}%)`
+  const p = replaced ? b.prev : undefined
+  return p ? `${line}\n이전 계획 "${p.goal}"의 안 끝난 작업 ${p.left.length}개(${p.left.join(', ')})를 Plan 탭 아래에 요약해 두었습니다. 이어서 할 거면 add로 다시 붙이세요.` : line
 }
 
 // glowup의 PlanItem으로 바꾼다. 띠와 상태줄의 plan 표시도 이것을 읽는다
@@ -67,7 +85,8 @@ export const BOARD_SPEC: ToolSpec = {
     type: 'object',
     properties: {
       goal: { type: 'string', description: '요청을 한 줄로 요약한 목표. tasks와 함께 보낸다' },
-      tasks: { type: 'array', items: { type: 'string' }, minItems: 1, description: '작업 제목 목록. 보내면 새 계획으로 바뀌고 첫 작업이 진행 중이 된다' },
+      tasks: { type: 'array', items: { type: 'string' }, minItems: 1, description: '작업 제목 목록. 보내면 지금 계획을 버리고 새 계획으로 바뀌며 첫 작업이 진행 중이 된다' },
+      add: { type: 'array', items: { type: 'string' }, minItems: 1, description: '지금 계획 뒤에 이어 붙일 작업 제목. 목표와 완료 기록은 그대로 둔다' },
       start: { type: 'integer', minimum: 1, description: '순서를 건너뛸 때만: 진행 중으로 바꿀 작업 번호 (1부터)' },
       done: { type: 'integer', minimum: 1, description: '방금 끝낸 작업 번호 (1부터). 다음 예정 작업이 자동으로 진행 중이 된다' },
       note: { type: 'string', description: 'done과 함께 보낸다. 무엇을 어떻게 했는지 한 줄' },

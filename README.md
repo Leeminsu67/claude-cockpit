@@ -156,7 +156,7 @@ glowup 새 버전 v1.3.0이 나왔습니다(지금 합친 버전 1.2.0). Claude�
 |---|---|
 | Claude Code | 2.1.287 이상 (2.1.316에서 만들고 확인) |
 | 화면 모드 | 전체 화면 모드(`"tui": "fullscreen"`). 오른쪽 패널은 터미널이 144칸 이상이면 저절로 열리고, 한 번 연 뒤로는 110칸부터 열립니다. 좁으면 `/cockpit pane`으로 엽니다 |
-| 이미지 미리보기 | 그림을 그릴 수 있는 터미널(kitty, Ghostty, iTerm2 3.5 이상, Orca)과 **Orca의 이미지 붙여 넣기** |
+| 이미지 미리보기 | **Orca** 터미널. Orca의 에이전트 실행 기능으로 띄우면 그대로 되고, 셸에서 `claude`를 직접 실행하면 아래 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` 설정이 필요합니다 |
 
 ## 함께 켜면 좋은 설정
 
@@ -164,11 +164,15 @@ mod에 들어 있지 않은 설정이라 `~/.claude/settings.json`에 맥마다 
 
 ```json
 {
+  "env": {
+    "CLAUDE_CODE_FORCE_TERMINAL_IMAGES": "1"
+  },
   "language": "korean",
   "theme": "dark"
 }
 ```
 
+- `CLAUDE_CODE_FORCE_TERMINAL_IMAGES`: 터미널 이름과 상관없이 그림을 켭니다. Orca 셸에서 `claude`를 직접 실행할 때 이미지 미리보기에 필요합니다. 그림을 못 그리는 터미널(VS Code 터미널, macOS 기본 터미널 등)에서도 켜지므로, 그런 곳에서 화면에 이상한 글자가 보이면 빼세요
 - `language`: 모든 프로젝트에서 Claude가 한국어로 답합니다
 - `theme`: 터미널 바탕이 어두우면 `dark`로 맞춥니다. 밝은 테마로 두면 오른쪽 패널 바탕이 흰색으로 나옵니다
 
@@ -182,6 +186,7 @@ mod에 들어 있지 않은 설정이라 `~/.claude/settings.json`에 맥마다 
   - Claude Code가 입력 중인 이미지의 파일 위치를 mod에 알려 주지 않습니다
   - 그래서 Orca가 붙여 넣을 때마다 임시 폴더에 만드는 `orca-paste-*.png` 파일을 시각 순서로 짝짓습니다
   - PNG만 되고, 붙여 넣은 지 1분이 넘은 파일은 짝짓지 않습니다
+  - Claude Code는 터미널 이름이 kitty나 Ghostty일 때만 그림을 켭니다. Orca는 여기에 해당하지 않아서 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1`이 없으면 그림 대신 `#N` 글자가 나옵니다([함께 켜면 좋은 설정](#함께-켜면-좋은-설정))
 - 그림 자체는 누를 수 없어서 아래의 `#N` 버튼으로 엽니다
 - 보낸 메시지에는 지금처럼 `[Image #N]` 글자로만 남습니다
 

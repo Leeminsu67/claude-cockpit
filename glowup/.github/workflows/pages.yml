@@ -1,0 +1,47 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'hooks/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes a queued one but never cancels a running deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: docs/web/pnpm-lock.yaml
+      # pnpm 12 fails the install on an unapproved build script; esbuild comes in through fumadocs-mdx.
+      # The fumadocs excludes skip the one-day release-age gate and are dead once 16.16.1 is a day old (2026-10-05 14:04Z).
+      - run: >-
+          pnpm -C docs/web install --frozen-lockfile --ignore-workspace
+          --allow-build=esbuild
+          --config.minimum-release-age-exclude=fumadocs-core@16.16.1
+          --config.minimum-release-age-exclude=fumadocs-ui@16.16.1
+      - run: pnpm -C docs/web build
+      - run: pnpm -C docs/web check
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/web/build/client
+      - id: deploy
+        uses: actions/deploy-pages@v5

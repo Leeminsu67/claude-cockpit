@@ -7,15 +7,9 @@ mod는 Claude Code의 화면과 동작을 바꾸는 플러그인으로, Claude C
 
 ## 설치
 
-이 저장소는 비공개입니다. 설치하는 맥에서 GitHub 인증이 먼저 되어 있어야 합니다.
-인증이 안 되어 있으면 설치 명령이 인증을 묻지 않고 실패합니다.
+공개 저장소라 GitHub 로그인 없이 설치할 수 있습니다. 필요한 것은 Claude Code 2.1.287 이상뿐입니다(터미널에서 `claude --version`으로 확인).
 
-```bash
-gh auth login        # GitHub 로그인 (SSH 키를 이미 쓰고 있다면 생략)
-gh auth setup-git    # git이 gh 로그인을 쓰게 한다
-```
-
-예전에 설치한 것이 있으면 먼저 지웁니다. 같은 기능이 두 번 불러와지지 않게 하기 위해서입니다. 설치되어 있던 것만 지우면 됩니다.
+원래 glowup이나 이 mod의 예전 버전을 설치한 적이 있으면 먼저 지웁니다. 같은 기능이 두 번 불러와지지 않게 하기 위해서입니다. 설치되어 있던 것만 지우면 됩니다.
 
 ```bash
 claude plugin uninstall glowup@glowup                # 원래 glowup

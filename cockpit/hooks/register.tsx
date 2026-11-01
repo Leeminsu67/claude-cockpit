@@ -3,7 +3,7 @@ import type { Host } from './host.ts'
 import { atom, read, update } from 'claude-code' // claude-mods
 import { applyProgress, BOARD_SPEC, registerBoard, summary, toPlan, type Board, type BoardInput } from './board.tsx' // claude-mods
 import { registerImages } from './images.tsx' // claude-mods
-import { upstreamText } from './upstream.ts' // claude-mods
+import { GLOWUP_BASE, upstreamText } from './upstream.ts' // claude-mods
 import { initialModel, normalizeModel, applyEvent, mergeCounts, isBusy, agentsRunning, type Model, type Ev } from './model.ts'
 import { approvalLabel, dialogCall, modeAsksPerson } from './events.ts'
 import { shown, type Theme } from './themes.ts'
@@ -200,7 +200,6 @@ let listSeq = 0
 // list's answer can sit unshown until something else publishes; the 5 s tick publishes when this lags.
 let listsDrawn: Lists | undefined
 const CLIENT_ID = /^[0-9a-f]{32}$/
-let modVersion: string | undefined
 // the plugin's userConfig, kept for loadSettings: an undo reloads settings outside register()
 let pluginOptions: Readonly<Record<string, unknown>> = {}
 const DOCK_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit' } // claude-mods: 패널 제목 cockpit (id는 그대로)
@@ -1173,10 +1172,9 @@ function startRemote($: Engine, dir: string, cursor: Cursor) {
   remoteTimer = $.clock.every(250, () => void pollRemote($))
 }
 
+// claude-mods: glowup 실행 파일 내려받기와 설정 화면에는 합쳐 둔 glowup 원본 버전을 쓴다(plugin.json version은 cockpit 자체 버전)
 async function versionOf($: Engine): Promise<string> {
-  modVersion ??= await hostOf($).readFile(`${$.plugin.root}/.claude-plugin/plugin.json`)
-    .then(t => String((JSON.parse(t) as { version?: unknown }).version ?? 'dev'), () => 'dev')
-  return modVersion
+  return GLOWUP_BASE
 }
 
 async function writeRemoteState($: Engine) {
@@ -2065,7 +2063,7 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'cockpit' }, async ($, e, next) => { // claude-mods: 명령 /cockpit
     if (off) return next(e)
-    if (e.args.trim() === 'update') return { text: await upstreamText(hostOf($), $.plugin.root) } // claude-mods
+    if (e.args.trim() === 'update') return { text: await upstreamText(hostOf($)) } // claude-mods
     const text = await runCommand(hostOf($), e.args, ctlOf($))
     await syncTakeover($)
     return { text }

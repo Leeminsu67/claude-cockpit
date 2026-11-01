@@ -3,6 +3,8 @@
 import type { Host } from './host.ts'
 
 const REPO = 'NovusEdge/glowup'
+// 합쳐 둔 glowup 원본 버전. 새 버전을 합치면 여기를 바꾼다. cockpit 자체 버전은 plugin.json에 따로 매긴다(2.0.0부터)
+export const GLOWUP_BASE = '1.2.0'
 const LATEST = `https://api.github.com/repos/${REPO}/releases/latest`
 
 const parts = (v: string) => v.replace(/^v/, '').split(/[.-]/).slice(0, 3).map(n => Number.parseInt(n, 10) || 0)
@@ -13,8 +15,8 @@ export function isNewer(a: string, b: string) {
   return false
 }
 
-export async function upstreamText(host: Pick<Host, 'fetchText' | 'readFile'>, root: string): Promise<string> {
-  const current = String((JSON.parse(await host.readFile(`${root}/.claude-plugin/plugin.json`)) as { version?: unknown }).version)
+export async function upstreamText(host: Pick<Host, 'fetchText'>): Promise<string> {
+  const current = GLOWUP_BASE
   let tag: string
   try {
     const r = await host.fetchText(LATEST)

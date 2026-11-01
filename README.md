@@ -213,6 +213,7 @@ git merge upstream-glowup
 
 합친 뒤 확인할 것:
 
+- `cockpit/hooks/upstream.ts`의 `GLOWUP_BASE`를 새 glowup 버전으로 바꾸고, `cockpit/.claude-plugin/plugin.json`의 `version`을 올립니다
 - 충돌은 우리가 고친 파일에서만 날 수 있습니다. 해당 줄에는 모두 `claude-mods` 주석이 붙어 있습니다
 - 새로 생긴 파일이 `glowup/` 폴더에 따로 생겼으면 `cockpit/`으로 옮깁니다
 - 새 테스트에 `plugin: 'glowup'`, `command: 'glowup'`이 있으면 `cockpit`으로 바꿉니다
@@ -231,6 +232,9 @@ mod를 고치는 맥에서는 설치하지 말고 이 저장소의 `cockpit` 폴
 ```
 
 - 마켓플레이스로도 설치하면 같은 mod가 두 번 불러와집니다. 둘 중 하나만 씁니다
+- **고친 것을 다른 맥에 보내려면 `cockpit/.claude-plugin/plugin.json`의 `version`을 올린 뒤 push합니다.** `claude plugin update`는 버전 번호로 새 것을 판단해서, 번호가 같으면 "이미 최신"이라며 받지 않습니다
+  - cockpit 버전은 glowup과 따로 매깁니다(2.0.0부터)
+  - 바탕이 된 glowup 버전은 `cockpit/hooks/upstream.ts`의 `GLOWUP_BASE`에 있습니다. `/cockpit config` 실행 파일을 glowup 릴리스에서 내려받을 때와 `/cockpit update` 비교에 씁니다
 - 이 설정은 Claude Code가 시작할 때만 읽습니다. 바꾼 뒤에는 새 세션을 엽니다
 - 파일을 저장하면 실행 중인 세션에 자동으로 다시 적용됩니다
 - 고친 뒤에는 아래로 검사합니다
@@ -240,7 +244,7 @@ claude plugin validate --strict cockpit   # 엔진이 거부할 내용이 있는
 claude plugin test cockpit                # 테스트 전체 (약 2분)
 ```
 
-- **테스트**: glowup에서 온 테스트 중 10개는 Claude Code 2.1.316에서 원본 그대로 돌려도 실패합니다. 권한 대화상자 알림 6개, 펫·음악·금요일 표시 4개입니다. 우리 기능 테스트는 `cockpit/test/claude-mods.test.tsx`에 있습니다
+- **테스트**: glowup에서 온 테스트 중 10개는 Claude Code 2.1.316에서 원본 그대로 돌려도 실패합니다. 권한 대화상자 알림 6개, 펫·음악·금요일 표시 4개입니다. 밤 11시~새벽 5시에는 펫 수면 모자 테스트 1개가 더 실패합니다(시간대 차이). 우리 기능 테스트는 `cockpit/test/claude-mods.test.tsx`에 있습니다
 - **타입 검사**: `cockpit/types/vendor`의 엔진 타입은 2.1.289 기준입니다. 우리 코드가 쓰는 새 기능(`isDeferred`, `prompt.change`)이 없어서, 타입 검사는 지금 엔진의 타입으로 합니다
 
 우리가 바꾼 곳:

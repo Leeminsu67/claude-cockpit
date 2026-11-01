@@ -157,13 +157,12 @@ test('/glowup update: 원래 glowup의 최신 릴리스와 합친 버전을 비�
   expect(isNewer('v1.1.9', '1.2.0')).toBe(false)
 
   const host = (r: { ok: boolean; status: number; text: string } | Error) => ({
-    readFile: async () => JSON.stringify({ version: '1.2.0' }),
     fetchText: async () => { if (r instanceof Error) throw r; return r },
   })
-  const newer = await upstreamText(host({ ok: true, status: 200, text: JSON.stringify({ tag_name: 'v1.3.0' }) }), '/root')
+  const newer = await upstreamText(host({ ok: true, status: 200, text: JSON.stringify({ tag_name: 'v1.3.0' }) }))
   expect(newer).toMatch(/새 버전 v1\.3\.0이 나왔습니다\(지금 합친 버전 1\.2\.0\)/)
   expect(newer).toMatch(/releases\/tag\/v1\.3\.0/)
-  expect(await upstreamText(host({ ok: true, status: 200, text: JSON.stringify({ tag_name: 'v1.2.0' }) }), '/root')).toMatch(/최신입니다/)
-  expect(await upstreamText(host({ ok: false, status: 403, text: '' }), '/root')).toMatch(/GitHub 응답 403/)
-  expect(await upstreamText(host(new Error('timed out after 10 s')), '/root')).toMatch(/확인하지 못했습니다\(timed out/)
+  expect(await upstreamText(host({ ok: true, status: 200, text: JSON.stringify({ tag_name: 'v1.2.0' }) }))).toMatch(/최신입니다/)
+  expect(await upstreamText(host({ ok: false, status: 403, text: '' }))).toMatch(/GitHub 응답 403/)
+  expect(await upstreamText(host(new Error('timed out after 10 s')))).toMatch(/확인하지 못했습니다\(timed out/)
 })

@@ -31,7 +31,7 @@ function base(on: any, render: (e: any) => void = () => {}, opts: { shown?: bool
   on('turn.start', async (_$: unknown, e: any) => ({ turnId: e.turnId }))
   on('tool.call', async () => ({ result: {}, text: (typeof opts.toolText === 'function' ? opts.toolText() : opts.toolText) ?? 'Tests: 3 failed, 9 passed' }) as never)
 }
-const mountPane = ($: any) => $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+const mountPane = ($: any) => $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
 
 test('the pane hosts the pet Client with raw inputs; the band never does', { timeoutMs: 20000 }, async ($, on) => {
   base(on); mock.clock(on)
@@ -42,7 +42,7 @@ test('the pane hosts the pet Client with raw inputs; the band never does', { tim
   expect(c.props.props.input.working).toBe(true)
   expect(c.props.props.width).toBe(46)
   expect('pose' in c.props.props).toBe(false)
-  const band = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: BAND })
+  const band = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: BAND })
   expect(petClient(await band.drawn())).toBeUndefined()
   await pane.unmount(); await band.unmount()
 })
@@ -69,7 +69,7 @@ test('the pet region is sized to the strip so he has room to walk; the compact r
   const pane = await mountPane($)
   expect(petClient(await pane.drawn()).props.width).toBe(46)
   await pane.unmount()
-  const inline = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { ...(PANE as object), placement: 'inline', bodyColumns: 60 } as never })
+  const inline = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { ...(PANE as object), placement: 'inline', bodyColumns: 60 } as never })
   expect(petClient(await inline.drawn()).props.width).toBeUndefined()
   await inline.unmount()
 })
@@ -117,7 +117,7 @@ test('pet changes do not redraw the band', async ($, on) => {
   let bandDraws = 0
   base(on, e => { if (e.component === 'AbovePrompt') bandDraws++ })
   const clock = mock.clock(on)
-  const band = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: BAND })
+  const band = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: BAND })
   const before = bandDraws
   await runGlowup($, 'bubbles on')
   await $.tool.call({ tool: 'Bash', tool_use_id: 'b2', command: 'npm test' } as never)
@@ -271,7 +271,7 @@ test('the pack look reaches the band and the pane, pet on or off', async ($, on)
   base(on); mock.clock(on)
   await runGlowup($, 'pack arcade')
   await $.turn.start({ text: 'hi', turnId: 't1' })
-  const band = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: BAND })
+  const band = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: BAND })
   expect(text(await band.drawn())).toContain('HP')
   await band.unmount()
   for (const cmd of ['', 'pet off']) {

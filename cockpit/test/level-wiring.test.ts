@@ -33,7 +33,7 @@ function base(on: any, store: Record<string, unknown>, opts: { toolText?: () => 
 }
 
 const paneText = async ($: any) => {
-  const pane = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+  const pane = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
   const body = text(await pane.drawn())
   await pane.unmount()
   return body

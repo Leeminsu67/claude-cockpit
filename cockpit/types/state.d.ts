@@ -59,7 +59,7 @@ declare module 'claude-code' {
     glowup: Glowup
   }
   interface PluginState {
-    glowup: {
+    cockpit: { // claude-mods: 플러그인 이름을 cockpit으로 바꿈
       band: { model: GlowupModel; at: number }
       pane: { model: GlowupModel; view: GlowupPaneView; at: number }
       spinner: { turnAt: number; detail: string; state: string; at: number }

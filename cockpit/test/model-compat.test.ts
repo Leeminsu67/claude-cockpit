@@ -32,15 +32,15 @@ test('normalizeModel fills the fields a stored model lacks and keeps the rest', 
   expect(normalizeModel(full)).toEqual(full)
 })
 
-const PANE_ARGS = { plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } } as const
-const BAND_ARGS = { plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false, isWorking: true, maxRows: 6, bodyColumns: 100, scroll: { offset: 0, bodyRows: 10 }, view: {} } } as const
+const PANE_ARGS = { plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } } as const
+const BAND_ARGS = { plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false, isWorking: true, maxRows: 6, bodyColumns: 100, scroll: { offset: 0, bodyRows: 10 }, view: {} } } as const
 
 test('a pane and band snapshot written by 0.3.0 draw without throwing', async ($, on) => {
   fakeFs(on)
   mock.store(on)
   const mem = new Map<string, unknown>([
-    ['glowup/pane', { model: V030, view: { tab: 'plan' }, at: 1 }],
-    ['glowup/band', { model: V030, at: 1 }],
+    ['cockpit/pane', { model: V030, view: { tab: 'plan' }, at: 1 }],
+    ['cockpit/band', { model: V030, at: 1 }],
   ])
   on('state.get', async (_$: unknown, e: any) => ({ value: { value: mem.get(`${e.plugin}/${e.key}`), version: 1 } }) as never)
   on('state.set', async (_$: unknown, e: any) => { mem.set(`${e.plugin}/${e.key}`, e.value); return { value: { isSet: true, version: 1 } } as never })

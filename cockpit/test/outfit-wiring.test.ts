@@ -36,7 +36,7 @@ function base(on: any, store: Record<string, unknown>, failOutfit = false) {
 
 const start = ($: any) => $.session.start({ cwd: '/r', surface: 'terminal', isInteractive: false })
 const clientProps = async ($: any) => {
-  const pane = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+  const pane = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
   const c = petClient(await pane.drawn())
   await pane.unmount()
   return c.props.props
@@ -108,7 +108,7 @@ test('a failed outfit write still announces the level-up', async ($, on) => {
   await start($)
   await answer($, clock, 't1')
   expect(store.level).toEqual({ format: 1, xp: 300 })
-  const pane = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+  const pane = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
   const body = walk(await pane.drawn()).filter((n: any) => typeof n === 'string').join(' ')
   await pane.unmount()
   expect(body).toContain('Lv 3')

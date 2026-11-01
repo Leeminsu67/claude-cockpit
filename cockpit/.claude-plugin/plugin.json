@@ -1,5 +1,5 @@
 {
-  "name": "glowup",
+  "name": "cockpit",
   "version": "1.2.0",
   "description": "A glow-up for Claude Code: a cockpit pane for changes, subagents and context, an activity band, and shareable themes.",
   "author": {

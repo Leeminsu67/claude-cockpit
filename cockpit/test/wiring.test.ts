@@ -11,7 +11,7 @@ test('band is empty when idle, on terminal and desktop', { timeoutMs: 20000 }, a
   on('ui.panes', async () => ({ value: [] }))
   on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine'] }) as RenderElement)
   for (const surface of ['terminal', 'desktop'] as const) {
-    const idle = await $.ui.mount({ plugin: 'glowup', surface, component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 6, bodyColumns: 100, scroll, view: {} } })
+    const idle = await $.ui.mount({ plugin: 'cockpit', surface, component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 6, bodyColumns: 100, scroll, view: {} } })
     expect(await idle.find({ text: /♥/ })).toBeUndefined()
     await idle.unmount()
   }
@@ -29,14 +29,14 @@ test('the band shows during a turn and folds after the linger', async ($, on) =>
   on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', async () => ({ text: '' }))
   await $.turn.start({ text: 'hi', turnId: 't1' })
-  const ui = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: BAND })
+  const ui = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: BAND })
   expect(await ui.find({ text: /♥/ })).toBeDefined()
   await $.turn.complete({ reason: 'answer', answer: 'done', durationMs: 10, isAborted: false, turnId: 't1' })
   // the linger is measured on Date.now (wall time), which mock.clock does not move
   await new Promise(r => setTimeout(r, 1550))
   await clock.advance(1700)
   await ui.unmount()
-  const after = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: { ...BAND, isWorking: false } })
+  const after = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: { ...BAND, isWorking: false } })
   expect(await after.find({ text: /♥/ })).toBeUndefined()
   await after.unmount()
 })
@@ -51,19 +51,19 @@ test('/clear starts the model over under the new session id', async ($, on) => {
   mock.clock(on)
   on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
   await $.turn.start({ text: 'hi', turnId: 't1' })
-  const working = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: BAND })
+  const working = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: BAND })
   expect(await working.find({ text: /♥/ })).toBeDefined()
   await working.unmount()
   id = 's2'
   await $.session.end({ reason: 'clear', sessionId: 's1' } as never)
-  const cleared = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: BAND })
+  const cleared = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: BAND })
   expect(await cleared.find({ text: /♥/ })).toBeUndefined()
   await cleared.unmount()
 })
 
 test('pane draws four tab buttons and opens on Plan & context', async ($, on) => {
   fakeFs(on)
-  const ui = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 54, placement: 'dock', scroll, view: {} } })
+  const ui = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 54, placement: 'dock', scroll, view: {} } })
   for (const label of ['Plan & context', 'Agents', 'Diff', 'Changes']) expect(await ui.find({ text: label })).toBeDefined()
   expect(await ui.find({ text: /PLAN/ })).toBeDefined()
   await ui.press({ key: 'tab-agents' })
@@ -95,7 +95,7 @@ test('the status entry shows only while Claude or a subagent works', async ($, o
   await $.turn.complete({ ...END, reason: 'answer' })
   // the main turn is over; the background subagent is not
   expect(statuses.at(-1)).toBe('◆ delegating · ctx 10%')
-  const band = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'AbovePrompt', props: { ...BAND, isWorking: false } })
+  const band = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'AbovePrompt', props: { ...BAND, isWorking: false } })
   expect(await band.find({ text: /1 subagent/ })).toBeDefined()
   await band.unmount()
   const ticks = statuses.length
@@ -405,7 +405,7 @@ test('the Plan tab reads the breakdown once, not on every redraw', async ($, on)
     return { value: { context: { window: 1000, percent: 10, breakdown: { categories: [{ name: 'Messages', tokens: 400, kind: 'used' }], maxTokens: 1000 } } } as never }
   })
   await $.turn.start({ text: 'hi', turnId: 't1' })
-  const ui = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 54, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } })
+  const ui = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 54, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } })
   await ui.press({ key: 'tab-plan' })
   await clock.advance(10)
   expect(await ui.find({ text: /messages/ })).toBeDefined()
@@ -423,7 +423,7 @@ test('ToolUse rows get a glyph only when finished and of a known kind', async ($
   fakeFs(on)
   on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine row'] }) as RenderElement)
   const draw = async (props: typeof TOOL) => {
-    const ui = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'ToolUse', requestId: 'u1', props })
+    const ui = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'ToolUse', requestId: 'u1', props })
     const out = { row: await ui.find({ text: /engine row/ }), glyph: await ui.find({ text: /✎|▸/ }) }
     await ui.unmount()
     return out
@@ -450,7 +450,7 @@ test('tool events and ticks do not re-render a ToolUse row', async ($, on) => {
   on('session.usage', async () => ({ value: { context: { window: 1000, percent: 10 } } as never }))
   on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
   on('tool.call', async () => ({ result: {}, text: 'ok' }) as never)
-  const row = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'ToolUse', requestId: 'u1', props: TOOL })
+  const row = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'ToolUse', requestId: 'u1', props: TOOL })
   const before = toolRows
   await $.turn.start({ text: 'hi', turnId: 't1' })
   await $.tool.call({ tool: 'Read', tool_use_id: 'r1', file_path: '/a' } as never)

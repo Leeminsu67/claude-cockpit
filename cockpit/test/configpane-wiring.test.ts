@@ -20,7 +20,7 @@ const setup = (on: any, surfaces: string[] = ['terminal'], files: Record<string,
   on('session.id', async () => ({ value: 's1' }))
   return { opens, copies, closes, copyResult }
 }
-const mountConfig = ($: any, surface = 'terminal') => $.ui.mount({ plugin: 'glowup', surface, component: 'Pane', requestId: 'glowup-config', props: { title: 'glowup config', isFocused: true, bodyColumns: 90, placement: 'inline', scroll: { offset: 0, bodyRows: 40 }, view: {} } })
+const mountConfig = ($: any, surface = 'terminal') => $.ui.mount({ plugin: 'cockpit', surface, component: 'Pane', requestId: 'glowup-config', props: { title: 'glowup config', isFocused: true, bodyColumns: 90, placement: 'inline', scroll: { offset: 0, bodyRows: 40 }, view: {} } })
 
 test('/glowup config opens the focused config pane and asks nothing', async ($, on) => {
   const s = setup(on)
@@ -171,7 +171,7 @@ test('the meter cycle runs both of its commands', async ($, on) => {
 test('/glowup config output is no longer drawn as a card', async ($, on) => {
   setup(on)
   const text = (await runGlowup($, 'config pane')).text!
-  const ui = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'CommandOutput', props: { command: 'glowup', args: 'config', text, isErrored: false } })
+  const ui = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'CommandOutput', props: { command: 'cockpit', args: 'config', text, isErrored: false } })
   expect(await ui.find({ text: 'engine' })).toBeDefined()
   await ui.unmount()
 })

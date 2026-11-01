@@ -6,8 +6,8 @@ import { fakeFs } from './kit.ts'
 import { fit, pair, tags } from '../hooks/images.tsx'
 import { isNewer, upstreamText } from '../hooks/upstream.ts'
 
-const TOOL = 'mcp__glowup__progress'
-const PANE = { plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 60 }, view: {} } } as const
+const TOOL = 'mcp__cockpit__progress'
+const PANE = { plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 60 }, view: {} } } as const
 
 type On = Parameters<typeof fakeFs>[0]
 function boot(on: On) {
@@ -133,7 +133,7 @@ test('이미지 미리보기: 입력창 위에 썸네일과 #N 버튼을 그리�
     return <Text>엔진</Text>
   })
   const ui = await $.ui.mount({
-    plugin: 'glowup',
+    plugin: 'cockpit',
     surface: 'terminal',
     component: 'AbovePrompt',
     props: { hasSurvey: false, isWorking: false, maxRows: 12, bodyColumns: 80, scroll: { offset: 0, bodyRows: 12 }, view: {} },

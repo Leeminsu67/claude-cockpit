@@ -19,8 +19,8 @@ function base(on: any, files: Record<string, string> = {}) {
   on('session.id', async () => ({ value: 's1' }))
   on('session.usage', async () => ({ value: { context: { window: 1000, percent: 10 } } as never }))
 }
-const mountPane = ($: any) => $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
-const mountPrompt = ($: any, requestId: string) => $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'UserMessage', requestId, props: PROMPT })
+const mountPane = ($: any) => $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+const mountPrompt = ($: any, requestId: string) => $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'UserMessage', requestId, props: PROMPT })
 const FRAMES = { ms: 100, frames: [[[{ text: '⣿⣷', color: '#e0703a' }]], [[{ text: '⣷⣿', color: '#e0703a' }]]] }
 
 test('with no renderer plugin the pane draws as before: no field, the usual life row', async ($, on) => {

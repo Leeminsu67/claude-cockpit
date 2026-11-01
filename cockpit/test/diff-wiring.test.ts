@@ -1,7 +1,7 @@
 import { test, expect, mock } from 'claude-code/testing'
 import { fakeFs } from './kit.ts'
 
-const PANE = { plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } } as const
+const PANE = { plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } } as const
 const PATCH = ['diff --git a/src/a.ts b/src/a.ts', '--- a/src/a.ts', '+++ b/src/a.ts', '@@ -1 +1 @@', '-old', '+brand new line', ''].join('\n')
 
 // A repo at /r whose HEAD, numstat and tracked files the test moves between steps.

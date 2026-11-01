@@ -91,7 +91,7 @@ test('every pack draws every row site through the real validator', async ($, on)
   for (const pack of Object.keys(PACKS)) {
     await runGlowup($, `pack ${pack}`)
     for (const m of mounts) {
-      const ui = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: m.component as never, requestId: 'r1', props: m.props as never })
+      const ui = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: m.component as never, requestId: 'r1', props: m.props as never })
       await ui.unmount()
     }
   }

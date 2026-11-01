@@ -5,7 +5,7 @@ import type { On, PluginOptions, ToolSpec } from 'claude-code'
 
 import type { PlanItem } from './events.ts'
 
-export const BOARD_TOOL = 'mcp__glowup__progress'
+export const BOARD_TOOL = 'mcp__cockpit__progress'
 
 export type Status = 'todo' | 'doing' | 'done'
 export type Task = { title: string; note?: string; status: Status }
@@ -13,7 +13,7 @@ export type Board = { goal: string; tasks: Task[] }
 export type BoardInput = { goal?: string; tasks?: string[]; start?: number; done?: number; note?: string }
 
 const RULE = `## 진행판
-사용자 화면 오른쪽 glowup 패널의 Plan 탭에 진행판이 있다. 모든 요청에서 다른 도구를 쓰거나 답하기 전에 ${BOARD_TOOL} 도구로 goal(요청을 한 줄로 요약)과 tasks(작업 목록)를 먼저 올린다. 질문에 답만 하는 요청도 작업 1개로 올린다.
+사용자 화면 오른쪽 cockpit 패널의 Plan 탭에 진행판이 있다. 모든 요청에서 다른 도구를 쓰거나 답하기 전에 ${BOARD_TOOL} 도구로 goal(요청을 한 줄로 요약)과 tasks(작업 목록)를 먼저 올린다. 질문에 답만 하는 요청도 작업 1개로 올린다.
 작업은 예정 → 진행 중 → 완료로 바뀐다. 첫 작업은 올리자마자 진행 중이 되고, done(번호)과 note(무엇을 어떻게 했는지 한 줄)로 완료하면 다음 예정 작업이 진행 중이 된다. 순서를 건너뛸 때만 start(번호)로 진행 중을 직접 정한다. 계획이 바뀌면 tasks를 다시 올린다. 글은 한국어로 쓴다.`
 
 const setStatus = (tasks: Task[], n: number, status: Status, note?: string) =>
@@ -61,7 +61,7 @@ export const BOARD_SPEC: ToolSpec = {
   name: 'progress',
   isDeferred: false,
   description:
-    '사용자 화면 오른쪽 glowup 패널의 Plan 탭에 있는 진행판을 갱신한다. 요청을 시작할 때 goal과 tasks로 계획을 올리고, 작업을 하나 끝낼 때마다 done과 note로 완료 처리한다. 작업은 예정, 진행 중, 완료로 보인다.',
+    '사용자 화면 오른쪽 cockpit 패널의 Plan 탭에 있는 진행판을 갱신한다. 요청을 시작할 때 goal과 tasks로 계획을 올리고, 작업을 하나 끝낼 때마다 done과 note로 완료 처리한다. 작업은 예정, 진행 중, 완료로 보인다.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -78,7 +78,7 @@ export function registerBoard(on: On, options: PluginOptions) {
   on('prompt.compose', async ($, e, next) => {
     const composed = await next(e)
     if (!e.tools.includes(BOARD_TOOL)) return composed
-    return { sections: [...composed.sections, { id: 'glowup:board-rule', text: RULE, scope: 'session' as const }] }
+    return { sections: [...composed.sections, { id: 'cockpit:board-rule', text: RULE, scope: 'session' as const }] }
   })
 
   // /config의 '한국어 질문 카드 검사'를 끄면 그냥 지나간다(설정을 바꾸면 모듈이 새 값으로 다시 불러와진다)

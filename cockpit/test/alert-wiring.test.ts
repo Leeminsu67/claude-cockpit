@@ -7,7 +7,7 @@ const scroll = { offset: 0, bodyRows: 20 }
 const paneProps = (view: object = {}) => ({ title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll, view }) as never
 const walk = (n: any, out: any[] = []): any[] => { if (typeof n === 'string') out.push(n); else if (n && typeof n === 'object') { out.push(n); for (const c of n.children ?? []) walk(c, out) } return out }
 const petInput = async ($: any, view: object = {}) => {
-  const pane = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: paneProps(view) })
+  const pane = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: paneProps(view) })
   const c = walk(await pane.drawn()).find(n => n?.type === 'Client' && String(n.props?.module).endsWith('client/pet.tsx'))
   await pane.unmount()
   return c.props.props.input as { working: boolean; kind?: string; needsYou: boolean }

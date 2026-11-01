@@ -15,7 +15,7 @@ export const test = ((name: string, ...rest: unknown[]) => {
 }) as unknown as typeof baseTest
 
 export const runGlowup = ($: Engine, args = '', columns = 120, isFullscreen = false) =>
-  $.command.run({ command: 'glowup', args, origin: { kind: 'composer' }, presentation: { isFullscreen, columns } })
+  $.command.run({ command: 'cockpit', args, origin: { kind: 'composer' }, presentation: { isFullscreen, columns } })
 
 export type FakeRequest = { method: string; url: string; headers: Record<string, string>; body?: string }
 

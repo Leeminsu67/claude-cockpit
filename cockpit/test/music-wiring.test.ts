@@ -9,7 +9,7 @@ const PANE = { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'd
 const walk = (n: any, out: any[] = []): any[] => { if (typeof n === 'string') out.push(n); else if (n && typeof n === 'object') { out.push(n); for (const c of n.children ?? []) walk(c, out) } return out }
 const petClient = (tree: any) => walk(tree).find(n => n?.type === 'Client' && String(n.props?.module).endsWith('client/pet.tsx'))
 const text = (tree: any) => walk(tree).filter(n => typeof n === 'string').join(' ')
-const mountPane = ($: any, surface = 'terminal') => $.ui.mount({ plugin: 'glowup', surface, component: 'Pane', requestId: 'glowup', props: PANE })
+const mountPane = ($: any, surface = 'terminal') => $.ui.mount({ plugin: 'cockpit', surface, component: 'Pane', requestId: 'glowup', props: PANE })
 
 const DEST = 'org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player'
 const BUS = `busctl --user --json=short get-property ${DEST} PlaybackStatus Metadata Position`

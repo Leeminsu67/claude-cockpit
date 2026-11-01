@@ -2,7 +2,7 @@ import { test, expect, mock } from 'claude-code/testing'
 import { fakeFs } from './kit.ts'
 
 const task = (id: string, subject: string, status: string) => JSON.stringify({ id, subject, status, description: '', blocks: [], blockedBy: [] })
-const PANE = { plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } } as const
+const PANE = { plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: { title: 'glowup', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} } } as const
 
 function boot(on: Parameters<typeof fakeFs>[0]) {
   on('command.register', async () => ({ value: undefined }) as never)

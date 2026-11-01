@@ -113,5 +113,5 @@ export const start = async ($: any, on: any) => {
   await clock.advance(50)
   return clock
 }
-export const mountPane = ($: any) => $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE_PROPS() })
-export const mountPlayer = ($: any, bodyRows = 24, surface = 'terminal') => $.ui.mount({ plugin: 'glowup', surface, component: 'Pane', requestId: 'glowup-music', props: { ...(PANE_PROPS(bodyRows) as object), title: 'Music' } })
+export const mountPane = ($: any) => $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE_PROPS() })
+export const mountPlayer = ($: any, bodyRows = 24, surface = 'terminal') => $.ui.mount({ plugin: 'cockpit', surface, component: 'Pane', requestId: 'glowup-music', props: { ...(PANE_PROPS(bodyRows) as object), title: 'Music' } })

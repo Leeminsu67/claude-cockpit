@@ -64,13 +64,13 @@ import { detached, ensureBinary, moveFile, pickTerminal, platformOf, releaseTarg
 type Engine = EngineInterface
 type SpinKey = { turnAt: number; detail: string; state: OrbState }
 
-const BAND = { plugin: 'glowup', key: 'band' } as const
-const PANE = { plugin: 'glowup', key: 'pane' } as const
-const SPIN = { plugin: 'glowup', key: 'spinner' } as const
-const PET = { plugin: 'glowup', key: 'pet' } as const
-const HAIKU = { plugin: 'glowup', key: 'haiku' } as const
+const BAND = { plugin: 'cockpit', key: 'band' } as const // claude-mods: 이름 cockpit
+const PANE = { plugin: 'cockpit', key: 'pane' } as const // claude-mods: 이름 cockpit
+const SPIN = { plugin: 'cockpit', key: 'spinner' } as const // claude-mods: 이름 cockpit
+const PET = { plugin: 'cockpit', key: 'pet' } as const // claude-mods: 이름 cockpit
+const HAIKU = { plugin: 'cockpit', key: 'haiku' } as const // claude-mods: 이름 cockpit
 // The session id that was greeted. A hot reload re-runs session.start, and must not greet again.
-const HELLO = { plugin: 'glowup', key: 'hello' } as const
+const HELLO = { plugin: 'cockpit', key: 'hello' } as const // claude-mods: 이름 cockpit
 
 // Module state: one session per process. A hot reload starts it over, which only
 // loses the in-flight session's view (settings and takeover state live in $.store).
@@ -145,7 +145,7 @@ let installed: number | undefined
 let lastPet = ''
 let eggJuggleAt: number | undefined
 let clickToasted = false
-const PANE_OPEN: PaneOpenArgs = { id: 'glowup', title: 'glowup', focus: true, closeOnEscape: true }
+const PANE_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit', focus: true, closeOnEscape: true } // claude-mods: 패널 제목 cockpit (id는 그대로)
 const CONFIG_ID = 'glowup-config'
 const CONFIG_OPEN: PaneOpenArgs = { id: CONFIG_ID, title: 'glowup config', focus: true, closeOnEscape: true, rows: 40 }
 // Read when the config pane opens and after each pack change: its render hook may not read disk.
@@ -203,7 +203,7 @@ const CLIENT_ID = /^[0-9a-f]{32}$/
 let modVersion: string | undefined
 // the plugin's userConfig, kept for loadSettings: an undo reloads settings outside register()
 let pluginOptions: Readonly<Record<string, unknown>> = {}
-const DOCK_OPEN: PaneOpenArgs = { id: 'glowup', title: 'glowup' }
+const DOCK_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit' } // claude-mods: 패널 제목 cockpit (id는 그대로)
 const PLAYER_OPEN: PaneOpenArgs = { id: PLAYER_ID, title: 'Music', focus: true, closeOnEscape: true, holdToasts: true, rows: 24, columns: 110 }
 // open({ focus }) is refused while the glowup pane holds the keys, so a press there closes the pane first;
 // the dialog's close then reopens it with the keys.
@@ -1044,7 +1044,7 @@ async function togglePane($: Engine): Promise<string> {
 // claude-mods: 진행판에 새 계획이 오면 dock을 열고 Plan 탭으로 넘긴다(탭 버튼을 누른 것과 같다)
 let boardShown = false
 // 진행판 계획. 저장 모양을 바꾸면 태그도 바꾼다(예전 값은 버리고 null로 읽는다). 엔진 검사상 read/update를 부르는 이 파일에 둔다
-const board = atom({ plugin: 'glowup', key: 'board' } as const, null as Board | null, { shape: 'board-1' })
+const board = atom({ plugin: 'cockpit', key: 'board' } as const, null as Board | null, { shape: 'board-1' })
 // session.start에서 부른다: 진행판 도구를 등록하고, 모듈을 다시 불러와 비어 버린 모델에 세션에 남은 진행판을 다시 넣는다
 async function startBoard($: Engine) {
   try {
@@ -1579,7 +1579,7 @@ export const register: Register = (on, options) => {
     }
     startBeat($)
     void checkStale($)
-    await $.command.register({ name: 'glowup', description: 'Themes, the glowup pane and status line', argumentHint: 'config|theme|pack|spinner|color|import|export|pet|bubbles|pane|music|spotify|motion|statusline on|fields|setup|level|outfit|restore' })
+    await $.command.register({ name: 'cockpit', description: 'Themes, the cockpit pane and status line', argumentHint: 'config|theme|pack|spinner|color|import|export|pet|bubbles|pane|music|spotify|motion|statusline on|fields|setup|level|outfit|restore' }) // claude-mods: 명령 /cockpit
     await loadSettings($, host)
     if (e.isInteractive) void startMusic($)
     sessionId = await $.session.id()
@@ -2051,7 +2051,7 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'CommandOutput' }, async ($, e, next) => {
     if (off) return next(e)
     const p = e.props
-    if ((e.surface !== 'terminal' && e.surface !== 'desktop') || p.command !== 'glowup' || p.isErrored) return next(e)
+    if ((e.surface !== 'terminal' && e.surface !== 'desktop') || p.command !== 'cockpit' || p.isErrored) return next(e) // claude-mods: 명령 /cockpit
     // Matched on the exact text the command printed, so an error or a changed answer stays the engine's row.
     const args = p.args.trim()
     if ((args === '' || args === 'help') && p.text === SHORT_TEXT) return renderHelp($.ui.resolve(e), look, false)
@@ -2063,7 +2063,7 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  on('command.run', { command: 'glowup' }, async ($, e, next) => {
+  on('command.run', { command: 'cockpit' }, async ($, e, next) => { // claude-mods: 명령 /cockpit
     if (off) return next(e)
     if (e.args.trim() === 'update') return { text: await upstreamText(hostOf($), $.plugin.root) } // claude-mods
     const text = await runCommand(hostOf($), e.args, ctlOf($))
@@ -2114,7 +2114,7 @@ export const register: Register = (on, options) => {
   registerBoard(on, options)
   registerImages(on)
 
-  on('tool.call', { tool: 'mcp__glowup__progress' }, async ($, e) => {
+  on('tool.call', { tool: 'mcp__cockpit__progress' }, async ($, e) => {
     // 하위 에이전트가 메인 대화의 목록을 덮지 않게 한다
     if (e.agentId) return { result: '진행판은 메인 대화만 갱신합니다. 이 호출은 무시했습니다.' }
     const input = e as BoardInput

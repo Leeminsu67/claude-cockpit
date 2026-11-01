@@ -1,12 +1,12 @@
 {
-  "name": "claude-mods",
+  "name": "claude-cockpit",
   "owner": { "name": "Leeminsu67" },
-  "description": "Claude Code를 내 작업 방식에 맞게 바꾸는 mod 모음",
+  "description": "Claude Code 오른쪽 패널에 작업 진행판, 컨텍스트, 하위 에이전트, 바뀐 파일을 모아 보는 mod",
   "plugins": [
     {
-      "name": "glowup",
-      "source": "./glowup",
-      "description": "glowup(NovusEdge/glowup 1.2.0)에 진행판(Plan 탭), 한국어 질문 카드 검사, 이미지 미리보기, /glowup update를 더한 mod"
+      "name": "cockpit",
+      "source": "./cockpit",
+      "description": "glowup(NovusEdge/glowup 1.2.0)을 바탕으로 진행판(Plan 탭), 한국어 질문 카드 검사, 이미지 미리보기, /cockpit update를 더한 mod"
     }
   ]
 }

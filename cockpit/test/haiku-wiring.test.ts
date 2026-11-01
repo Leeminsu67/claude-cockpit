@@ -38,7 +38,7 @@ const failTurn = async ($: any, id: string, prompt = 'hi') => {
   await $.tool.call({ tool: 'Bash', tool_use_id: 'b' + id, command: 'npm test' } as never)
 }
 const body = async ($: any) => {
-  const pane = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+  const pane = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
   const t = text(await pane.drawn())
   await pane.unmount()
   return t
@@ -221,16 +221,16 @@ test('a needs-you prompt names no command', async ($, on) => {
 test('the cooldown survives a hot reload: the last call time lives in $.state', async ($, on) => {
   const r = rig(on, async () => answer('hmm')); const clock = mock.clock(on)
   // a call "just made" by the copy this one replaced, whatever the mock clock reads
-  const mem = new Map<string, unknown>([['glowup/haiku', { lastAt: Number.MAX_SAFE_INTEGER }]])
+  const mem = new Map<string, unknown>([['cockpit/haiku', { lastAt: Number.MAX_SAFE_INTEGER }]])
   on('state.get', async (_$: unknown, e: any) => ({ value: { value: mem.get(`${e.plugin}/${e.key}`), version: 1 } }) as never)
   on('state.set', async (_$: unknown, e: any) => { mem.set(`${e.plugin}/${e.key}`, e.value); return { value: { isSet: true, version: 1 } } as never })
   await r.start($); await runGlowup($, 'bubbles haiku')
   await failTurn($, 't1'); await flush(clock)
   expect(r.prompts).toHaveLength(0)
-  mem.set('glowup/haiku', { lastAt: -1e12 })
+  mem.set('cockpit/haiku', { lastAt: -1e12 })
   await failTurn($, 't2'); await flush(clock)
   expect(r.prompts).toHaveLength(1)
-  expect((mem.get('glowup/haiku') as { lastAt: number }).lastAt).toBeGreaterThan(-1e12)
+  expect((mem.get('cockpit/haiku') as { lastAt: number }).lastAt).toBeGreaterThan(-1e12)
 })
 
 test('the prompt holds glowup state only: no prompt text, cwd or file contents', async ($, on) => {
@@ -249,7 +249,7 @@ test('the prompt holds glowup state only: no prompt text, cwd or file contents',
 test('a hello never spends the turn\'s Haiku call', async ($, on) => {
   const r = rig(on, async () => answer('a fresh line')); const clock = mock.clock(on)
   await r.start($); await runGlowup($, 'bubbles haiku')
-  const pane = await $.ui.mount({ plugin: 'glowup', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
+  const pane = await $.ui.mount({ plugin: 'cockpit', surface: 'terminal', component: 'Pane', requestId: 'glowup', props: PANE })
   await pane.drawn(); await clock.advance(20)
   const shown = text(await pane.drawn())
   expect(anyLine(BUILTIN_LINES.clawd, 'hello').some(l => shown.includes(l))).toBe(true)

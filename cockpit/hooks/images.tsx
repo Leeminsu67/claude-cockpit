@@ -12,9 +12,9 @@ const PASTE = /^orca-paste-(\d+)-.*\.png$/
 const TAG = /\[Image #(\d+)\]/g
 const RECENT_MS = 60_000 // 이보다 오래된 파일은 이번 붙여 넣기로 보지 않는다
 
-const images = atom({ plugin: 'glowup', key: 'images' } as const, {} as Record<string, Img>)
-const draft = atom({ plugin: 'glowup', key: 'draft' } as const, [] as number[])
-const viewing = atom({ plugin: 'glowup', key: 'viewing' } as const, null as number | null)
+const images = atom({ plugin: 'cockpit', key: 'images' } as const, {} as Record<string, Img>)
+const draft = atom({ plugin: 'cockpit', key: 'draft' } as const, [] as number[])
+const viewing = atom({ plugin: 'cockpit', key: 'viewing' } as const, null as number | null)
 
 export const tags = (text: string) => [...text.matchAll(TAG)].map(m => Number(m[1]))
 

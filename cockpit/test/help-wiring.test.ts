@@ -14,8 +14,8 @@ const setup = (on: any) => {
   on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine'] }) as RenderElement)
   on('session.id', async () => ({ value: 's1' }))
 }
-const row = (args: string, text: string, over: object = {}) => ({ command: 'glowup', args, text, isErrored: false, ...over }) as never
-const mountRow = ($: any, props: unknown, surface: string = 'terminal') => $.ui.mount({ plugin: 'glowup', surface, component: 'CommandOutput', props })
+const row = (args: string, text: string, over: object = {}) => ({ command: 'cockpit', args, text, isErrored: false, ...over }) as never
+const mountRow = ($: any, props: unknown, surface: string = 'terminal') => $.ui.mount({ plugin: 'cockpit', surface, component: 'CommandOutput', props })
 const classic = resolveLook({ colors: 'classic', motion: 'classic' }, {}, {}).look
 
 test('the short card draws the header, five rows and the footer in the look colors', { timeoutMs: 20000 }, async ($, on) => {

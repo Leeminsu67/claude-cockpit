@@ -3,6 +3,7 @@ import { normalizeModel, planFold, type Model, type PlanItem } from './model.ts'
 import { legendRows, stackBar, type Heavy } from './ctxchart.ts'
 import { brailleArea, chartTop, markBar, outlook, tokensK } from './trend.ts'
 import { planOrder } from './tasks.ts'
+import { boardRows } from './board-rows.ts' // claude-mods
 import type { Theme } from './themes.ts'
 import { shortPath } from './events.ts'
 import type { Border, Look } from './packs.ts'
@@ -285,14 +286,15 @@ function plan(m: Model, t: Theme, v: PaneView, w: number, compact: boolean, limi
   const { items: shown, hiddenDone } = planOrder(m.plan)
   const lead = compact ? '  ' : '', iw = compact ? w : boxInner(w)
   const folded = planFold(m)
-  const items: Seg[][] = folded === undefined ? shown.map(p => planRow(p, t, iw, lead)) : [[{ text: lead, color: c.text }, { text: `✓ plan done · ${folded} task${folded === 1 ? '' : 's'}`, color: c.pass }]]
+  // claude-mods: 진행판 계획(planGoal 있음)은 boardRows로 그린다
+  const items: Seg[][] = folded === undefined ? (m.planGoal !== undefined ? boardRows(m, t, iw, lead) : shown.map(p => planRow(p, t, iw, lead))) : [[{ text: lead, color: c.text }, { text: `✓ plan done · ${folded} task${folded === 1 ? '' : 's'}`, color: c.pass }]]
   if (!m.plan.length) items.push([{ text: lead + 'No task list yet.', color: c.dim }])
   if (compact) {
     const inner = Math.max(4, w - 12)
     const ctx = fit([{ text: ' ctx ▕', color: c.dim }, ...markCompact(stackBar(cats, v.maxTokens, used, inner, t).segs, v, inner, t), { text: `▏${String(used).padStart(4)}%`, color: c.text }], w)
     return { rows: [...cap(items, t, w, 1, limit), ctx], n: -1 }
   }
-  if (hiddenDone && folded === undefined) items.push([{ text: `  +${hiddenDone} more done`, color: c.dim }])
+  if (hiddenDone && folded === undefined && m.planGoal === undefined) items.push([{ text: `  +${hiddenDone} more done`, color: c.dim }])
   const usedTokens = cats.some(x => x.kind === 'used') ? cats.filter(x => x.kind === 'used').reduce((n, x) => n + x.tokens, 0) : v.maxTokens ? used / 100 * v.maxTokens : undefined
   const stack = stackBar(cats, v.maxTokens, used, iw, t)
   const ctx: Seg[][] = [markCompact(stack.segs, v, iw, t), ...legendRows(stack.slices, iw, t)]

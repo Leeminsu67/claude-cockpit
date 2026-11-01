@@ -9,6 +9,7 @@ export type NeedsYou = { toolUseId: string; what: string; before: Act }
 export type RateLimit = { kind: string; percentUsed: number; resetsAt?: string }
 export type Model = {
   working: boolean; doneAt?: number; act: Act; agents: Agent[]; plan: PlanItem[]; files: FileTouch[]; ctxPercent: number; needsYou?: NeedsYou
+  planGoal?: string // claude-mods: 진행판 목표. 있으면 Plan 탭을 진행판 모양으로 그린다
   // context percent once per finished turn (the first reading after turn-done replaces the stale one), capped at CTX_SAMPLES
   ctxHistory: number[]
   ctxSampledAt?: number
@@ -45,7 +46,7 @@ export type Ev =
   | { type: 'context'; percent: number }
   | { type: 'compact'; at: number }
   // Claude Code's saved task list; an empty read leaves the plan built from this session's calls
-  | { type: 'plan-load'; plan: PlanItem[] }
+  | { type: 'plan-load'; plan: PlanItem[]; goal?: string } // claude-mods: goal
   | { type: 'usage'; limits: RateLimit[]; costUsd?: number }
   // a field left out keeps its last value: model() and root() are read separately and either can fail
   | { type: 'session-info'; modelName?: string; root?: string }
@@ -145,7 +146,7 @@ export function applyEvent(m: Model, ev: Ev): Model {
       return { ...m, ctxPercent, ctxPeak: Math.max(m.ctxPeak, ctxPercent), ctxHistory: fresh ? [...m.ctxHistory.slice(0, -1), ctxPercent] : m.ctxHistory }
     }
     case 'compact': return { ...m, compactions: m.compactions + 1, compactAt: ev.at }
-    case 'plan-load': return ev.plan.length ? settleFold({ ...m, plan: ev.plan }) : m
+    case 'plan-load': return ev.plan.length ? settleFold({ ...m, plan: ev.plan, planGoal: ev.goal }) : m
     case 'usage': return { ...m, limits: ev.limits, costUsd: ev.costUsd ?? m.costUsd }
     case 'session-info': return { ...m, modelName: ev.modelName ?? m.modelName, root: ev.root ?? m.root }
     case 'effort': return { ...m, effort: ev.effort }

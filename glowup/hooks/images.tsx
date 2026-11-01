@@ -1,20 +1,20 @@
-// 이미지 미리보기: 입력창 위에 붙여 넣은 이미지의 썸네일을 띄우고, #N 버튼을 누르면 오른쪽에 크게 보여 준다.
+// claude-mods: 이미지 미리보기: 입력창 위에 붙여 넣은 이미지의 썸네일을 띄우고, #N 버튼을 누르면 오른쪽에 크게 보여 준다.
 // 엔진은 입력 중인 이미지의 파일을 알려 주지 않는다. 그래서 Orca가 붙여 넣을 때마다 임시 폴더에 쓰는
 // orca-paste-<밀리초>-<uuid>.png 파일을 새 [Image #N]과 붙여 넣은 순서대로 짝짓는다.
 // ponytail: Orca 전용이다. 클립보드를 Claude Code가 직접 읽는 다른 터미널에서는 파일이 없어 썸네일이 안 뜬다
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { Img } from '../types'
+export type Img = { path: string; width?: number; height?: number }
 
 const VIEW = 'image-view'
 const PASTE = /^orca-paste-(\d+)-.*\.png$/
 const TAG = /\[Image #(\d+)\]/g
 const RECENT_MS = 60_000 // 이보다 오래된 파일은 이번 붙여 넣기로 보지 않는다
 
-const images = atom({ plugin: 'progress-board', key: 'images' } as const, {} as Record<string, Img>)
-const draft = atom({ plugin: 'progress-board', key: 'draft' } as const, [] as number[])
-const viewing = atom({ plugin: 'progress-board', key: 'viewing' } as const, null as number | null)
+const images = atom({ plugin: 'glowup', key: 'images' } as const, {} as Record<string, Img>)
+const draft = atom({ plugin: 'glowup', key: 'draft' } as const, [] as number[])
+const viewing = atom({ plugin: 'glowup', key: 'viewing' } as const, null as number | null)
 
 export const tags = (text: string) => [...text.matchAll(TAG)].map(m => Number(m[1]))
 

@@ -4,9 +4,9 @@
   "description": "Claude Code를 내 작업 방식에 맞게 바꾸는 mod 모음",
   "plugins": [
     {
-      "name": "progress-board",
-      "source": "./progress-board",
-      "description": "작업 진행판(예정·진행 중·완료), 한국어 질문 카드 검사, 붙여 넣은 이미지 미리보기"
+      "name": "glowup",
+      "source": "./glowup",
+      "description": "glowup(NovusEdge/glowup 1.2.0)에 진행판(Plan 탭), 한국어 질문 카드 검사, 이미지 미리보기, /glowup update를 더한 mod"
     }
   ]
 }

@@ -18,6 +18,8 @@
     "spinner": { "type": "string", "title": "Spinner", "description": "Spinner name: stock, comet, eyes, orb-states, clawd, shimmer, scanline, ring, glitch, signal, or pack for the pack's own", "default": "pack" },
     "pet": { "type": "string", "title": "Pet", "description": "clawd, robot, ghost, off, or a pet in ~/.claude/glowup/pets", "default": "clawd" },
     "bubbles": { "type": "string", "title": "Speech bubbles", "description": "on (template lines), off, or haiku (Claude Haiku writes some lines; small paid calls on your account)", "default": "on" },
-    "statusline": { "type": "string", "title": "Status line fields", "description": "Comma-separated, in order: activity, ctx, 5h, week, cost, model, effort, agents, plan, branch, changes, cwd, level, music. A / starts a second line.", "default": "activity,ctx,effort,5h,week" }
+    "statusline": { "type": "string", "title": "Status line fields", "description": "Comma-separated, in order: activity, ctx, 5h, week, cost, model, effort, agents, plan, branch, changes, cwd, level, music. A / starts a second line.", "default": "activity,ctx,effort,5h,week" },
+    "koreanQuestions": { "type": "boolean", "title": "한국어 질문 카드 검사", "description": "질문 카드의 질문이나 선택지 설명에 한글이 없으면 띄우지 않고 한국어로 다시 묻게 한다 (claude-mods)", "default": true },
+    "planTab": { "type": "string", "title": "진행판 탭 열기", "description": "새 작업 목록을 올릴 때 Plan 탭으로 넘어가는 시점 (claude-mods)", "options": ["요청마다", "처음 한 번"], "default": "요청마다" }
   }
 }

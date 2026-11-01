@@ -1,5 +1,9 @@
 import type { EngineInterface, PaneOpenArgs, Register, RenderElement, RenderSurface, Timer } from 'claude-code'
 import type { Host } from './host.ts'
+import { atom, read, update } from 'claude-code' // claude-mods
+import { applyProgress, BOARD_SPEC, registerBoard, summary, toPlan, type Board, type BoardInput } from './board.tsx' // claude-mods
+import { registerImages } from './images.tsx' // claude-mods
+import { upstreamText } from './upstream.ts' // claude-mods
 import { initialModel, normalizeModel, applyEvent, mergeCounts, isBusy, agentsRunning, type Model, type Ev } from './model.ts'
 import { approvalLabel, dialogCall, modeAsksPerson } from './events.ts'
 import { shown, type Theme } from './themes.ts'
@@ -1037,6 +1041,28 @@ async function togglePane($: Engine): Promise<string> {
   return r.isPlaced ? 'glowup pane open (Esc closes it)' : `glowup pane waits: ${r.reason}`
 }
 
+// claude-mods: 진행판에 새 계획이 오면 dock을 열고 Plan 탭으로 넘긴다(탭 버튼을 누른 것과 같다)
+let boardShown = false
+// 진행판 계획. 저장 모양을 바꾸면 태그도 바꾼다(예전 값은 버리고 null로 읽는다). 엔진 검사상 read/update를 부르는 이 파일에 둔다
+const board = atom({ plugin: 'glowup', key: 'board' } as const, null as Board | null, { shape: 'board-1' })
+// session.start에서 부른다: 진행판 도구를 등록하고, 모듈을 다시 불러와 비어 버린 모델에 세션에 남은 진행판을 다시 넣는다
+async function startBoard($: Engine) {
+  try {
+    await $.tool.register(BOARD_SPEC)
+    const b = await read($, board)
+    if (b) feed($, { type: 'plan-load', plan: toPlan(b), goal: b.goal })
+  } catch (err) {
+    // 진행판이 안 떠도 glowup 세션 시작은 막지 않는다
+    $.ui.log(`progress board start failed: ${err instanceof Error ? err.message : String(err)}`, { to: 'debug' })
+  }
+}
+function showBoard($: Engine) {
+  boardShown = true
+  view = { ...view, tab: 'plan', offset: 0 }
+  publish($)
+  void $.ui.open(DOCK_OPEN)
+}
+
 // A command is the one close the engine lets a plugin raise on this pane, so /glowup music toggles like /glowup pane.
 // toggle false (the connect flow) opens or brings forward, never closes.
 async function openPlayer($: Engine, fromPane: boolean, toggle = !fromPane): Promise<string> {
@@ -1601,6 +1627,7 @@ export const register: Register = (on, options) => {
     void loadPlan($)
     // a beat after launch, so the dialog does not open over the startup frame
     if (e.isInteractive) $.clock.after(1500, () => void askFirstRun($))
+    await startBoard($) // claude-mods
     // a hot reload restarts this module; the live band and pane must not keep an old snapshot
     publish($)
     return next(e)
@@ -2038,6 +2065,7 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'glowup' }, async ($, e, next) => {
     if (off) return next(e)
+    if (e.args.trim() === 'update') return { text: await upstreamText(hostOf($), $.plugin.root) } // claude-mods
     const text = await runCommand(hostOf($), e.args, ctlOf($))
     await syncTakeover($)
     return { text }
@@ -2080,4 +2108,29 @@ export const register: Register = (on, options) => {
     // the engine shows this as "Prompt dropped by a hook: <reason>", on one line: a newline draws as �
     return { drop: `glowup ran the pasted command. ${text.split('\n').map(l => l.trim()).filter(Boolean).join('; ')}` }
   })
+
+  // ── claude-mods ▼ 진행판, 한국어 질문 카드 검사, 이미지 미리보기 ──
+  // 계산은 board.tsx, 여기서는 glowup 모델(Plan 탭·띠·상태줄)에 넣고 탭을 바꾼다
+  registerBoard(on, options)
+  registerImages(on)
+
+  on('tool.call', { tool: 'mcp__glowup__progress' }, async ($, e) => {
+    // 하위 에이전트가 메인 대화의 목록을 덮지 않게 한다
+    if (e.agentId) return { result: '진행판은 메인 대화만 갱신합니다. 이 호출은 무시했습니다.' }
+    const input = e as BoardInput
+    let error: string | undefined
+    const next = await update($, board, p => {
+      const r = applyProgress(p, input)
+      error = r.error
+      return r.board
+    })
+    if (error) return { deny: error }
+    if (!next) return { deny: 'goal과 tasks로 계획을 먼저 올리세요.' }
+    feed($, { type: 'plan-load', plan: toPlan(next), goal: next.goal })
+    // /config '진행판 탭 열기': 요청마다(기본) 또는 처음 한 번
+    if (input.tasks?.length && (options.planTab !== '처음 한 번' || !boardShown)) showBoard($)
+    return { result: summary(next) }
+  }).catch(() => ({ deny: '진행판을 갱신하지 못했습니다.' }))
+
+  // ── claude-mods ▲ ──
 }

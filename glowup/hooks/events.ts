@@ -1,6 +1,6 @@
 export type Kind = 'read' | 'search' | 'edit' | 'shell' | 'agent' | 'plan' | 'other'
 export type ToolStart = { kind: Kind; label: string; file?: string; command?: string; isTest: boolean }
-export type PlanItem = { id: string; title: string; status: 'pending' | 'in_progress' | 'completed'; active?: string }
+export type PlanItem = { id: string; title: string; status: 'pending' | 'in_progress' | 'completed'; active?: string; note?: string } // claude-mods: note는 진행판의 완료 메모
 
 export const shortPath = (p: string) => p.split('/').filter(Boolean).slice(-2).join('/')
 const str = (v: unknown) => (typeof v === 'string' ? v : '')

@@ -1,7 +1,0 @@
-{
-  "name": "progress-board",
-  "version": "0.1.0",
-  "author": { "name": "Leeminsu67" },
-  "description": "요청마다 작업 목록, 완료 메모, 진행률을 오른쪽 진행판 패널에 보여 주고, 질문 카드는 한국어로만 묻게 하고, 붙여 넣은 이미지를 입력창 위에 미리 보여 준다",
-  "types": "./types/index.d.ts"
-}

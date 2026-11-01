@@ -3,13 +3,14 @@
 export type GlowupAct = { glyph: string; label: string; kind?: string; tone: 'text' | 'dim' | 'read' | 'edit' | 'shell' | 'agent' | 'pass' | 'fail' | 'accent' }
 export type GlowupAgent = { key: string; agentId?: string; name: string; task: string; state: 'running' | 'done'; startedAt: number; endedAt?: number; tokens?: number; now?: string }
 export type GlowupFileTouch = { path: string; add: number; del: number; how: 'read' | 'edit' | 'new'; at: number }
-export type GlowupPlanItem = { id: string; title: string; status: 'pending' | 'in_progress' | 'completed' }
+export type GlowupPlanItem = { id: string; title: string; status: 'pending' | 'in_progress' | 'completed'; note?: string } // claude-mods: note
 export type GlowupModel = {
   working: boolean
   doneAt?: number
   act: GlowupAct
   agents: GlowupAgent[]
   plan: GlowupPlanItem[]
+  planGoal?: string // claude-mods: 진행판 목표
   files: GlowupFileTouch[]
   ctxPercent: number
   needsYou?: { toolUseId: string; what: string; before: GlowupAct }
@@ -21,6 +22,9 @@ export type GlowupPaneView = {
   maxTokens?: number
   reduced?: boolean
 }
+// claude-mods: 진행판(hooks/board.tsx)과 이미지 미리보기(hooks/images.tsx)가 저장하는 값
+export type GlowupBoard = { goal: string; tasks: { title: string; note?: string; status: 'todo' | 'doing' | 'done' }[] }
+export type GlowupImage = { path: string; width?: number; height?: number }
 export type GlowupBubble = { text: string; mood: string; until: number }
 export type GlowupPetInput = { working: boolean; kind?: string; needsYou: boolean; lastTest?: { passed: boolean; at: number }; doneAt?: number; doneOk?: boolean; actAt?: number }
 
@@ -62,6 +66,11 @@ declare module 'claude-code' {
       haiku: { lastAt: number }
       hello: { sid: string }
       pet: { input: GlowupPetInput; overlays: string[]; bubble?: GlowupBubble; friday: boolean; at: number }
+      // claude-mods
+      board: Shaped<GlowupBoard | null>
+      images: Record<string, GlowupImage>
+      draft: number[]
+      viewing: number | null
     }
   }
 }

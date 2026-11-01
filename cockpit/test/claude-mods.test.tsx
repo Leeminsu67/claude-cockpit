@@ -3,6 +3,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { TestBody } from 'claude-code/testing'
 
 import { fakeFs } from './kit.ts'
+import { BOARD_SPEC } from '../hooks/board.tsx'
 import { fit, pair, tags } from '../hooks/images.tsx'
 import { isNewer, upstreamText } from '../hooks/upstream.ts'
 
@@ -43,6 +44,11 @@ test('진행판: 예정·진행 중·완료로 나뉘어 Plan 탭에 그려지�
   expect(await ui.find({ text: /이렇게 했다/ })).toBeDefined()
   expect(await ui.find({ text: /No task list yet/ })).toBeUndefined()
   await ui.unmount()
+})
+
+test('진행판 규칙은 도구 설명에도 들어 있다(시스템 프롬프트 단계가 건너뛰어져도 전달되게)', () => {
+  expect(BOARD_SPEC.description).toContain('모든 요청에서 다른 도구를 쓰거나 답하기 전에')
+  expect(BOARD_SPEC.description.length).toBeLessThan(4096) // 모델에 전달되는 도구 설명 한도
 })
 
 test('진행판: start로 순서를 건너뛰고, 없는 번호와 계획 없는 완료는 거부한다', async ($, on) => {

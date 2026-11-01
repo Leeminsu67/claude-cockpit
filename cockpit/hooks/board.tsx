@@ -56,12 +56,13 @@ type Question = { question: string; options: { description: string }[] }
 export const notKorean = (questions: Question[]) =>
   questions.flatMap(q => [q.question, ...q.options.map(o => o.description)]).find(t => t && !HANGUL.test(t))
 
-// 도구 등록은 glowup의 session.start가 한다(session.start 훅은 mod 하나에 하나만 둘 수 있다)
+// 도구 등록은 glowup의 session.start가 한다(session.start 훅은 mod 하나에 하나만 둘 수 있다).
+// 규칙(RULE)은 설명에도 넣는다. 회사 관리 플러그인 등이 prompt.compose를 먼저 처리하고 다른 플러그인의 훅을
+// 건너뛰게 하면 시스템 프롬프트 쪽 규칙은 빠지지만, 도구 설명은 그와 상관없이 모델에게 전달된다
 export const BOARD_SPEC: ToolSpec = {
   name: 'progress',
   isDeferred: false,
-  description:
-    '사용자 화면 오른쪽 cockpit 패널의 Plan 탭에 있는 진행판을 갱신한다. 요청을 시작할 때 goal과 tasks로 계획을 올리고, 작업을 하나 끝낼 때마다 done과 note로 완료 처리한다. 작업은 예정, 진행 중, 완료로 보인다.',
+  description: `사용자 화면 오른쪽 cockpit 패널의 Plan 탭에 있는 진행판을 갱신한다. 요청을 시작할 때 goal과 tasks로 계획을 올리고, 작업을 하나 끝낼 때마다 done과 note로 완료 처리한다. 작업은 예정, 진행 중, 완료로 보인다.\n\n${RULE}`,
   inputSchema: {
     type: 'object',
     properties: {

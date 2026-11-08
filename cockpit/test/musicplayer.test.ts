@@ -298,3 +298,27 @@ test('no two buttons in the dialog share a hotkey', () => {
     expect(hot).toEqual(expect.arrayContaining(['o', 'c']))
   }
 })
+
+test('Back to cockpit (b) sits with the controls, or on its own row without a track, and only when wired', () => {
+  let backs = 0
+  const back = { ...extra, onBack: () => { backs++ } }
+  const tree = renderPlayer(els, playing(), T, view(), 0, back)
+  const btn = walk(tree).find(n => n?.props?.key === 'music-back')
+  expect(btn.props).toMatchObject({ label: 'Back to cockpit', hotkey: 'b' })
+  expect(walk(walk(tree).find(n => n?.props?.key === 'controls'))).toContain(btn)
+  btn.onPress({})
+  expect(backs).toBe(1)
+  const closed = renderPlayer(els, { ...initialModel(), music: { status: 'closed' } }, T, view(), 0, back)
+  expect(keys(closed)).toContain('back-row')
+  expect(keys(renderPlayer(els, playing(), T, view(), 0, extra))).not.toContain('music-back')
+})
+
+test('another app playing hides the Spotify pitch and gives the left column the width; steps asked for still show', () => {
+  const ytm = playing({ player: 'YouTube Music' })
+  const hidden = renderPlayer(els, ytm, T, view(), 0, extra) as any
+  expect(text(hidden)).not.toContain(CONNECT_PITCH[0]!)
+  expect(hidden.props.flexDirection).toBe('column')
+  expect(walk(hidden).find(n => n?.props?.key === 'left').props.width).toBe(88)
+  expect(text(renderPlayer(els, ytm, T, view({ account: { step: 'steps' } }), 0, extra))).toContain('Connect Spotify')
+  expect(text(renderPlayer(els, playing(), T, view(), 0, extra))).toContain(CONNECT_PITCH[0]!)
+})

@@ -39,6 +39,19 @@ test('Player from the pane closes it and the dialog close reopens it with the ke
   await pane.unmount()
 })
 
+test('Back to cockpit closes the dialog and opens the pane, also when the command opened it', async ($, on) => {
+  const s = boot(on, { runs: { ...LINUX_BUS, [BUS]: ok(PLAYING) } })
+  const clock = await start($, on)
+  await runGlowup($, 'music')
+  await clock.advance(50)
+  const ui = await mountPlayer($)
+  await ui.press({ key: 'music-back' })
+  await clock.advance(50)
+  expect(s.closes.map(c => c.id)).toEqual(['glowup-music'])
+  expect(s.opens.map(o => o.id)).toEqual(['glowup-music', 'glowup'])
+  await ui.unmount()
+})
+
 test('the dialog draws the track and its Clients, and a press reaches Spotify', async ($, on) => {
   const NEXT = `busctl --user call ${DEST} Next`
   const s = boot(on, { runs: { ...LINUX_BUS, [BUS]: ok(PLAYING), [NEXT]: ok() } })

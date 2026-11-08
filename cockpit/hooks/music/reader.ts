@@ -1,5 +1,5 @@
 import type { Host } from '../host.ts'
-import { LOOP_STATUS, OSA_READ, PLAYERCTL_EXTRAS_FORMAT, PLAYERCTL_FORMAT, osaGuarded, parseBusctl, parseBusctlExtras, parseOsascript, parsePlayerctl, parsePlayerctlExtras, type Music, type MusicCmd, type Repeat } from './parse.ts'
+import { LOOP_STATUS, OSA_READ, PLAYERCTL_EXTRAS_FORMAT, PLAYERCTL_FORMAT, YTM_JS_CMD, YTM_READ, osaGuarded, parseBusctl, parseBusctlExtras, parseOsascript, parsePlayerctl, parsePlayerctlExtras, parseYtm, ytmScript, type Music, type MusicCmd, type Repeat } from './parse.ts'
 
 export type Platform = 'linux' | 'mac' | 'windows'
 export type Backend = 'busctl' | 'playerctl' | 'osascript'
@@ -35,6 +35,8 @@ export async function pickBackend(host: Host, platform: Platform): Promise<Backe
 export class MusicReader {
   private fails = 0
   private last: Music = { status: 'closed' }
+  // on mac: the last read found YouTube Music in Chrome, not Spotify, so commands go there
+  private ytm = false
   constructor(private backend: Backend | undefined, private platform: Platform) {}
 
   async read(host: Host, now: number): Promise<Music> {
@@ -66,11 +68,20 @@ export class MusicReader {
       return { ...m, ...(x?.exitCode === 0 ? parsePlayerctlExtras(x.stdout) : undefined) }
     }
     const r = await host.run(['osascript', '-e', OSA_READ], undefined, RUN_MS)
-    return r.exitCode !== 0 ? undefined : parseOsascript(r.stdout, now)
+    const m = r.exitCode !== 0 ? undefined : parseOsascript(r.stdout, now)
+    if (!m) return undefined
+    if (m.status !== 'closed') { this.ytm = false; return m }
+    // Spotify is not running: YouTube Music, if a Chrome tab has it
+    const y = await host.run(['osascript', '-e', YTM_READ], undefined, RUN_MS)
+    const ym = y.exitCode !== 0 ? undefined : parseYtm(y.stdout, now)
+    if (ym) this.ytm = ym.status === 'open'
+    return ym
   }
 
   caps(): MusicCaps {
     // Spotify's Linux client ignores LoopStatus and Shuffle-on writes over MPRIS, and 1.2.74 ignored a Volume write (seen while paused), so busctl and playerctl offer none of them.
+    // YouTube Music's shuffle and repeat are buttons without a state to read, and its volume slider sets the <video>'s again
+    if (this.backend === 'osascript' && this.ytm) return { repeat: [], shuffle: false, raise: true, volume: false }
     const mac = this.backend === 'osascript'
     return { repeat: mac ? ['off', 'context'] : [], shuffle: mac, raise: this.backend === 'busctl' || this.backend === 'osascript', volume: mac }
   }
@@ -101,6 +112,14 @@ export class MusicReader {
         case 'repeat': return [...PCTL, 'loop', LOOP_STATUS[c.mode]]
         case 'volume': return [...PCTL, 'volume', unit(c.level).toFixed(2)]
       }
+    }
+    if (this.backend === 'osascript' && this.ytm) {
+      if (c.cmd === 'raise') return ['osascript', '-e', ytmScript(['set index of w to 1', 'activate', 'return ""'], '')]
+      const js = c.cmd === 'playpause' || c.cmd === 'next' || c.cmd === 'previous' ? YTM_JS_CMD[c.cmd]
+        : c.cmd === 'seek' ? YTM_JS_CMD.seek(secs(c.ms))
+        : c.cmd === 'like' ? YTM_JS_CMD.like(c.on)
+        : undefined
+      return js ? ['osascript', '-e', ytmScript([`execute t javascript "${js}"`, 'return ""'], '')] : undefined
     }
     if (this.backend === 'osascript') {
       const verb = c.cmd === 'playpause' || c.cmd === 'next' || c.cmd === 'previous' ? OSA_CMD[c.cmd]

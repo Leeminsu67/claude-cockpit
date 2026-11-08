@@ -72,7 +72,7 @@ export function renderPlayer(els: Els, m: Model, t: Theme, v: PlayerView, now: n
       left.push(extra.volume ? <Box key="volume" flexDirection="row">{extra.volume(vol) as any}</Box> : renderSegs(els, barRow(vol, lw, s.volume), 'volume'))
     }
     const buttons = musicControls(s, v.caps).map(b => <Button key={'music-' + b.key} label={b.label} hotkey={b.hotkey} plain dimColor={b.on === false} onPress={() => extra.onMusic(b.cmd)} />)
-    if (v.caps?.raise) buttons.push(<Button key="music-raise" label="Open Spotify" hotkey="o" plain onPress={() => extra.onMusic({ cmd: 'raise' })} />)
+    if (v.caps?.raise) buttons.push(<Button key="music-raise" label={`Open ${s.player ?? 'Spotify'}`} hotkey="o" plain onPress={() => extra.onMusic({ cmd: 'raise' })} />)
     if (track.url) { const url = track.url; buttons.push(<Button key="music-copy" label="Copy link" hotkey="c" plain onPress={() => extra.onCopy(url)} />) }
     // wraps at the column's width, so a narrow column takes two rows of buttons rather than overflowing
     left.push(<Box key="controls" flexDirection="row" flexWrap="wrap" columnGap={2} width={lw} marginTop={1}>{buttons}</Box>)

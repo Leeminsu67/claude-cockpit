@@ -127,6 +127,15 @@ Claude가 질문 카드(AskUserQuestion)를 띄울 때 질문이나 선택지 �
 glowup 새 버전 v1.3.0이 나왔습니다(지금 합친 버전 1.2.0). Claude에게 "glowup 새 버전 합쳐 줘"라고 하세요. 바뀐 내용: https://github.com/NovusEdge/glowup/releases/tag/v1.3.0
 ```
 
+### 5. Music 탭에서 YouTube Music
+
+맥에서 Spotify 앱이 꺼져 있으면 Chrome에 열린 YouTube Music(설치한 Chrome 앱 포함)을 Music 탭과 플레이어에 보여 줍니다.
+
+- 곡, 진행 막대, 재생/일시정지, 이전/다음, 탐색, 좋아요(`l`), 창 열기(`o`)가 됩니다. 셔플, 반복, 볼륨, 커버 이미지, Spotify 연결 목록은 없습니다
+- 처음 한 번 Chrome에서 **보기 > 개발자 > Apple 이벤트의 자바스크립트 허용**을 켭니다. YouTube Music 창이 앞에 있으면 이 메뉴가 안 보이니 일반 Chrome 창을 앞으로 가져와서 켭니다. 꺼져 있으면 Music 탭에 이 안내가 나옵니다
+- 첫 읽기 때 "Google Chrome 제어" 자동화 권한 창이 뜨면 허용합니다
+- Spotify 앱이 켜져 있으면 Spotify가 먼저입니다
+
 ## 설정
 
 `/config` 화면에서 `cockpit`으로 표시된 항목들입니다.

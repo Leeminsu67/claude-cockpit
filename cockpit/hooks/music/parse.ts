@@ -11,6 +11,8 @@ export type OpenMusic = {
   source?: 'api' | 'local'; device?: Device; liked?: boolean; upNext?: QueueItem
   // set with source local when progressMs was raised above the local read's own position: that raw position
   held?: number
+  // the app's name in the header when it is not Spotify
+  player?: string
 }
 export type Music = { status: 'closed' } | { status: 'unsupported'; hint: string } | OpenMusic
 export type MusicCmd =
@@ -145,6 +147,65 @@ export function parseOsascript(stdout: string, readAt: number): Music | undefine
   // AppleScript repeat is on or off; on repeats the context
   const rp = f[8] === 'true' ? 'context' : f[8] === 'false' ? 'off' : undefined
   return { ...m, ...extrasOf(f[7], undefined, f[9] === '' ? '' : String(Number(f[9]) / 100)), ...(rp && { repeat: rp }) }
+}
+
+// YouTube Music: a tab of Google Chrome, its installed app included. Chrome runs this JavaScript in an isolated
+// world, so the page's player API is out of reach; the <video>, mediaSession and the player bar's buttons are not.
+export const YTM_PLAYER = 'YouTube Music'
+export const YTM_JS_HINT = 'YouTube Music을 보려면 Chrome 메뉴 보기 > 개발자 > Apple 이벤트의 자바스크립트 허용을 켜세요.'
+const YTM_BAR = 'ytmusic-player-bar'
+// The JavaScript sits inside an AppleScript string, so it uses single quotes and no backslashes.
+const YTM_JS = `(()=>{const v=document.querySelector('video'),m=navigator.mediaSession.metadata;if(!v||!m)return 'open';`
+  + `const l=document.querySelector('${YTM_BAR} #like-button-renderer');`
+  + `return [v.paused?'paused':'playing',new URL(location.href).searchParams.get('v')||'',m.title,m.artist,m.album,Math.round((v.duration||0)*1000),v.currentTime,l?l.getAttribute('like-status')||'':''].join(String.fromCharCode(9))})()`
+const ytmClick = (sel: string) => `document.querySelector('${YTM_BAR} ${sel}').click()`
+export const YTM_JS_CMD = {
+  playpause: ytmClick('.play-pause-button button'),
+  next: ytmClick('.next-button button'),
+  previous: ytmClick('.previous-button button'),
+  seek: (secs: string) => `document.querySelector('video').currentTime=${secs}`,
+  // the button toggles, so it is pressed only when the heart is not already where it was asked to go
+  like: (on: boolean) => `(()=>{const b=document.querySelector('${YTM_BAR} #like-button-renderer');if(b&&(b.getAttribute('like-status')==='LIKE')!==${on})b.querySelector('#button-shape-like button').click()})()`,
+}
+
+// body runs on the first music.youtube.com tab as window w and tab t. URL of tabs of windows is one Apple Event,
+// not one a tab. Kept inside run script behind the is running check, like Spotify's, so it never launches Chrome.
+export function ytmScript(body: string[], none: string): string {
+  return [
+    'if application "Google Chrome" is running then',
+    `  return run script ${osaGuarded([
+      'tell application "Google Chrome"',
+      '  set us to URL of tabs of windows',
+      '  repeat with i from 1 to count us',
+      '    repeat with j from 1 to count item i of us',
+      '      if item j of item i of us starts with "https://music.youtube.com/" then',
+      '        set w to window i',
+      '        set t to tab j of w',
+      ...body.map(l => '        ' + l),
+      '      end if',
+      '    end repeat',
+      '  end repeat',
+      'end tell',
+      `return "${none}"`,
+    ].join('\n'))}`,
+    'end if',
+    `return "${none}"`,
+  ].join('\n')
+}
+// error 12 is Chrome's answer while Allow JavaScript from Apple Events is off
+const ytmJs = (js: string) => ['try', `  return execute t javascript "${js}"`, 'on error number 12', '  return "nojs"', 'end try']
+export const YTM_READ = ytmScript(ytmJs(YTM_JS), 'closed')
+
+export function parseYtm(stdout: string, readAt: number): Music | undefined {
+  const s = stdout.replace(/\n$/, '')
+  if (s === 'closed') return { status: 'closed' }
+  if (s === 'nojs') return { status: 'unsupported', hint: YTM_JS_HINT }
+  if (s === 'open') return { status: 'open', playing: false, ad: false, progressMs: 0, readAt, player: YTM_PLAYER }
+  const f = s.split('\t')
+  if (f.length !== 8) return undefined
+  const m = open(f[0]!, f[1]!, f[2]!, f[3]!, f[4]!, Number(f[5]) || 0, (Number(f[6]) || 0) * 1000, readAt, { url: f[1] ? `https://music.youtube.com/watch?v=${f[1]}` : undefined })
+  // like-status is LIKE, DISLIKE or INDIFFERENT, and empty when the bar has no like button
+  return { ...m, player: YTM_PLAYER, ...(f[7] && { liked: f[7] === 'LIKE' }) }
 }
 
 export function extrapolate(progressMs: number, readAt: number, durationMs: number, playing: boolean, now: number): number {

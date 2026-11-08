@@ -152,7 +152,7 @@ function music(m: Model, t: Theme, v: PaneView, w: number, compact: boolean, now
   }
   if (compact) return { rows: body.map(r => fit(r, w)), n: -1 }
   // local: connected, but the Web API is not answering, so this is the app on this computer
-  const rows = section('NOW PLAYING', s.status === 'open' && s.source === 'local' ? 'Spotify (local)' : 'Spotify', body, w, t, border)
+  const rows = section('NOW PLAYING', s.status === 'open' && s.player ? s.player : s.status === 'open' && s.source === 'local' ? 'Spotify (local)' : 'Spotify', body, w, t, border)
   const controls = s.status === 'open' ? musicControls(s, v.musicCaps) : undefined
   let seek: SeekSlot | undefined
   if (bar) {

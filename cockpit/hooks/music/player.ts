@@ -57,7 +57,8 @@ function keepProgress(m: Music, prev: Music | undefined, now: number): Music {
 // premium false: Spotify answered PREMIUM_REQUIRED once this session, so transport stays local.
 export function routeOf(cmd: MusicCmd, m: Music | undefined, premium: boolean): Route {
   const o = m?.status === 'open' && m.source === 'api' && m.device ? m : undefined
-  if (cmd.cmd === 'like') return o?.track?.uri ? 'api' : 'none'
+  // a local read with a heart (YouTube Music) likes through the app
+  if (cmd.cmd === 'like') return o?.track?.uri ? 'api' : m?.status === 'open' && m.liked !== undefined ? 'local' : 'none'
   // The lists' commands are API-only. They run with nothing active too: Spotify's NO_ACTIVE_DEVICE answer is what
   // sends the person to Devices, and transfer is the way out of that state.
   if (cmd.cmd === 'skipTo' || cmd.cmd === 'play' || cmd.cmd === 'playContext' || cmd.cmd === 'transfer') return m?.status === 'open' && m.source === 'api' ? 'api' : 'none'

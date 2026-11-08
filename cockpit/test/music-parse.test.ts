@@ -1,5 +1,5 @@
 import { test, expect } from 'claude-code/testing'
-import { parseBusctl, parseBusctlExtras, parsePlayerctl, parsePlayerctlExtras, parseOsascript, progressAt, sameMusic, extrapolate, type OpenMusic } from '../hooks/music/parse.ts'
+import { parseBusctl, parseBusctlExtras, parsePlayerctl, parsePlayerctlExtras, parseOsascript, parseYtm, YTM_JS_HINT, progressAt, sameMusic, extrapolate, type OpenMusic } from '../hooks/music/parse.ts'
 
 // Captured from Spotify 1.2 on Linux, 2026-10-10.
 const BUSCTL = [
@@ -148,4 +148,19 @@ test('sameMusic sees the connected fields change', () => {
   expect(sameMusic(a, { ...a, liked: true }, 0)).toBe(false)
   expect(sameMusic(a, { ...a, device: { id: 'd', name: 'Pixel 9', type: 'Smartphone', isThisComputer: false } }, 0)).toBe(false)
   expect(sameMusic(a, { ...a, upNext: { uri: 'spotify:track:n', title: 'N', artist: 'B', durationMs: 1 } }, 0)).toBe(false)
+})
+
+test('YouTube Music: the 8-field line, its heart, and closed, open and JavaScript-off', () => {
+  const line = ['playing', 'uYYlD1_W1Mo', 'T', 'A', '', '3768552', '2446.07', 'LIKE'].join('\t') + '\n'
+  expect(parseYtm(line, 2)).toEqual({
+    status: 'open', playing: true, ad: false, progressMs: 2446070, readAt: 2, player: 'YouTube Music', liked: true,
+    track: { id: 'uYYlD1_W1Mo', title: 'T', artist: 'A', album: '', durationMs: 3768552, url: 'https://music.youtube.com/watch?v=uYYlD1_W1Mo' },
+  })
+  expect((parseYtm(line.replace('LIKE', 'INDIFFERENT'), 2) as OpenMusic).liked).toBe(false)
+  // no like button on the bar: no heart
+  expect('liked' in (parseYtm(line.replace('LIKE', ''), 2) as OpenMusic)).toBe(false)
+  expect(parseYtm('closed\n', 2)).toEqual({ status: 'closed' })
+  expect(parseYtm('open\n', 2)).toEqual({ status: 'open', playing: false, ad: false, progressMs: 0, readAt: 2, player: 'YouTube Music' })
+  expect(parseYtm('nojs\n', 2)).toEqual({ status: 'unsupported', hint: YTM_JS_HINT })
+  expect(parseYtm('playing\tx', 2)).toBeUndefined()
 })

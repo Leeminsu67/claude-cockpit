@@ -89,6 +89,8 @@ test('the routing table', () => {
   const failing = mergeMusic(local(), { last: { at: 1000, music: api() } }, undefined, 99_000, I)
   const next = { cmd: 'next' } as const, like = { cmd: 'like', on: true } as const
   expect([routeOf(next, local(), true), routeOf(like, local(), true)]).toEqual(['local', 'none'])
+  // a local read with a heart (YouTube Music) likes through the app
+  expect(routeOf(like, { ...(local() as OpenMusic), liked: false }, true)).toBe('local')
   expect([routeOf(next, here, true), routeOf(like, here, true)]).toEqual(['apiThenLocal', 'api'])
   expect([routeOf(next, there, true), routeOf(like, there, true)]).toEqual(['api', 'api'])
   expect([routeOf(next, none, true), routeOf(like, none, true)]).toEqual(['local', 'none'])

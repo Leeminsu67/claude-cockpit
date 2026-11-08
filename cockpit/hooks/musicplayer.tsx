@@ -38,6 +38,8 @@ export type PlayerExtra = {
   onMusic: (cmd: MusicCmd) => void; onCopy: (url: string) => void; seek?: (props: SeekBarProps) => unknown; volume?: (props: SeekBarProps) => unknown
   onConnect?: () => void; onClientId?: (id: string) => void; onPaste?: (text: string) => void; onCancel?: () => void
   onList?: (id: ListId) => void; onPick?: (value: string) => void
+  // closes the player and brings the cockpit pane back
+  onBack?: () => void
 }
 
 // State, note and account lines wrap, since a 30-column left column truncates "Open Spotify to see what's playing."
@@ -46,10 +48,14 @@ const wrapped = (els: Els, text: string, color: string, key: string) => <els.Box
 export function renderPlayer(els: Els, m: Model, t: Theme, v: PlayerView, now: number, extra: PlayerExtra) {
   const { Box, Text, Button } = els
   const c = t.colors, s = m.music ?? { status: 'closed' as const }
-  const side = v.width >= SIDE_MIN
+  // The Spotify pitch is noise while another app plays; a connect under way, or asked for, still shows.
+  const account = v.account ?? { step: 'pitch' }
+  const hasRight = !(s.status === 'open' && s.player && account.step === 'pitch')
+  const side = hasRight && v.width >= SIDE_MIN
   const lw = side ? LEFT_COLS : v.width
   const row = (segs: Seg[], key: string) => renderSegs(els, fit(segs, lw), key)
   const left: unknown[] = []
+  const back = extra.onBack && <Button key="music-back" label="Back to cockpit" hotkey="b" plain onPress={() => extra.onBack!()} />
   if (s.status === 'unsupported') left.push(wrapped(els, s.hint, c.dim, 'state'))
   else if (s.status === 'closed') left.push(wrapped(els, s.hint ?? "Open Spotify to see what's playing.", c.dim, 'state'))
   else if (s.ad) left.push(wrapped(els, 'Ad', c.dim, 'state'))
@@ -74,20 +80,23 @@ export function renderPlayer(els: Els, m: Model, t: Theme, v: PlayerView, now: n
     const buttons = musicControls(s, v.caps).map(b => <Button key={'music-' + b.key} label={b.label} hotkey={b.hotkey} plain dimColor={b.on === false} onPress={() => extra.onMusic(b.cmd)} />)
     if (v.caps?.raise) buttons.push(<Button key="music-raise" label={`Open ${s.player ?? 'Spotify'}`} hotkey="o" plain onPress={() => extra.onMusic({ cmd: 'raise' })} />)
     if (track.url) { const url = track.url; buttons.push(<Button key="music-copy" label="Copy link" hotkey="c" plain onPress={() => extra.onCopy(url)} />) }
+    if (back) buttons.push(back)
     // wraps at the column's width, so a narrow column takes two rows of buttons rather than overflowing
     left.push(<Box key="controls" flexDirection="row" flexWrap="wrap" columnGap={2} width={lw} marginTop={1}>{buttons}</Box>)
   }
+  // without a track there is no controls row to sit in
+  if (back && !(s.status === 'open' && !s.ad && s.track)) left.push(<Box key="back-row" marginTop={1}>{back}</Box>)
   if (v.note) left.push(wrapped(els, v.note.text, v.note.tone === 'error' ? c.fail : c.dim, 'note'))
   const rw = side ? Math.max(1, v.width - LEFT_COLS - GAP) : v.width
   const right = (
     <Box key="right" flexDirection="column" width={rw} marginTop={side ? 0 : 1}>
-      {accountRows(els, t, v.account ?? { step: 'pitch' }, s, extra, rw) as any}
+      {accountRows(els, t, account, s, extra, rw) as any}
     </Box>
   )
   return (
     <Box flexDirection={side ? 'row' : 'column'} columnGap={side ? GAP : 0} width={v.width}>
       <Box key="left" flexDirection="column" width={lw}>{left as any}</Box>
-      {right}
+      {hasRight && right}
     </Box>
   )
 }

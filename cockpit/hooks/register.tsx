@@ -1100,6 +1100,16 @@ async function openPlayer($: Engine, fromPane: boolean, toggle = !fromPane): Pro
   return 'Music player open (Esc closes it)'
 }
 
+// What closing the dialog leaves to do: from the ui.close hook, or from Back, whose close the hook does not see.
+async function playerClosed($: Engine, reopen: boolean) {
+  playerNote = undefined
+  stopLists()
+  // the connect flow belongs to the dialog: closing it stops a waiting login
+  if (connectFlow) cancelLogin($, undefined)
+  if (reopen) await $.ui.open(PANE_OPEN).catch(() => {})
+  reopenPane = false
+}
+
 async function copyTrackLink($: Engine, url: string, surface: RenderSurface) {
   const r = await $.ui.copy({ text: url, surface }).catch((err: unknown) => ({ isCopied: false as const, reason: err instanceof Error ? err.message : String(err) }))
   playerNote = r.isCopied ? { text: 'Link copied.', tone: 'ok' } : { text: `Could not copy the link: ${r.reason}`, tone: 'error' }
@@ -1948,6 +1958,13 @@ export const register: Register = (on, options) => {
       onCancel: () => cancelLogin($, { step: 'steps' }),
       onList: id => showList($, id),
       onPick: value => pickRow($, value),
+      // reopens the pane also when the player was opened by command
+      onBack: () => void (async () => {
+        reopenPane = true
+        await $.ui.close({ id: PLAYER_ID }).catch(() => {})
+        // a close made with a render's $ skips this plugin's own ui.close hook, which would have cleared reopenPane
+        if (reopenPane) await playerClosed($, true)
+      })(),
       ...(clients && { seek: client('glowup-seek'), volume: client('glowup-volume') }),
     })
   })
@@ -1955,13 +1972,8 @@ export const register: Register = (on, options) => {
   on('ui.close', async ($, e, next) => {
     if (off || e.id !== PLAYER_ID) return next(e)
     const r = await next(e)
-    playerNote = undefined
-    stopLists()
-    // the connect flow belongs to the dialog: closing it stops a waiting login
-    if (connectFlow) cancelLogin($, undefined)
     // an unload is the mod going away, and a hot-reloaded module has nothing to reopen
-    if (reopenPane && e.origin.kind !== 'unload') await $.ui.open(PANE_OPEN).catch(() => {})
-    reopenPane = false
+    await playerClosed($, reopenPane && e.origin.kind !== 'unload')
     return r
   })
 

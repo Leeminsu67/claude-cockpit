@@ -125,7 +125,7 @@ function music(m: Model, t: Theme, v: PaneView, w: number, compact: boolean, now
   const note = (text: string): Seg[][] => [[{ text: lead + text, color: c.dim }]]
   let body: Seg[][], bar: { index: number; prefix: Seg[]; props: SeekBarProps } | undefined
   if (s.status === 'unsupported') body = note(s.hint)
-  else if (s.status === 'closed') body = note("Open Spotify to see what's playing.")
+  else if (s.status === 'closed') body = note(s.hint ?? "Open Spotify to see what's playing.")
   else if (s.ad) body = note('Ad')
   else if (!s.track) body = note('Nothing playing.')
   else if (compact) body = [fit([{ text: `${lead}♪ `, color: c.accent }, { text: s.track.title, color: c.text, bold: true }, { text: `${s.track.artist ? ` — ${s.track.artist}` : ''} ${s.playing ? '▶' : '‖'}`, color: c.dim }], w)]

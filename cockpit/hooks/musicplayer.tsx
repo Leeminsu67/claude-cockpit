@@ -51,7 +51,7 @@ export function renderPlayer(els: Els, m: Model, t: Theme, v: PlayerView, now: n
   const row = (segs: Seg[], key: string) => renderSegs(els, fit(segs, lw), key)
   const left: unknown[] = []
   if (s.status === 'unsupported') left.push(wrapped(els, s.hint, c.dim, 'state'))
-  else if (s.status === 'closed') left.push(wrapped(els, "Open Spotify to see what's playing.", c.dim, 'state'))
+  else if (s.status === 'closed') left.push(wrapped(els, s.hint ?? "Open Spotify to see what's playing.", c.dim, 'state'))
   else if (s.ad) left.push(wrapped(els, 'Ad', c.dim, 'state'))
   else if (!s.track) left.push(wrapped(els, 'Nothing playing.', c.dim, 'state'))
   else {

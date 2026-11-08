@@ -1,5 +1,5 @@
 import { test, expect } from 'claude-code/testing'
-import { parseBusctl, parseBusctlExtras, parsePlayerctl, parsePlayerctlExtras, parseOsascript, parseYtm, YTM_JS_HINT, progressAt, sameMusic, extrapolate, type OpenMusic } from '../hooks/music/parse.ts'
+import { parseBusctl, parseBusctlExtras, parsePlayerctl, parsePlayerctlExtras, parseOsascript, parseYtm, YTM_JS_HINT, MAC_CLOSED_HINT, progressAt, sameMusic, extrapolate, type OpenMusic } from '../hooks/music/parse.ts'
 
 // Captured from Spotify 1.2 on Linux, 2026-10-10.
 const BUSCTL = [
@@ -69,6 +69,7 @@ test('sameMusic ignores progress that matches the clock, notices a seek', () => 
   expect(sameMusic(a, { ...a, playing: false }, 0)).toBe(false)
   expect(sameMusic(a, { status: 'closed' }, 0)).toBe(false)
   expect(sameMusic({ status: 'closed' }, { status: 'closed' }, 0)).toBe(true)
+  expect(sameMusic({ status: 'closed' }, { status: 'closed', hint: 'h' }, 0)).toBe(false)
   expect(sameMusic(undefined, { status: 'closed' }, 0)).toBe(false)
 })
 
@@ -150,16 +151,18 @@ test('sameMusic sees the connected fields change', () => {
   expect(sameMusic(a, { ...a, upNext: { uri: 'spotify:track:n', title: 'N', artist: 'B', durationMs: 1 } }, 0)).toBe(false)
 })
 
-test('YouTube Music: the 8-field line, its heart, and closed, open and JavaScript-off', () => {
-  const line = ['playing', 'uYYlD1_W1Mo', 'T', 'A', '', '3768552', '2446.07', 'LIKE'].join('\t') + '\n'
+test('YouTube Music: the 9-field line, its heart and cover, and closed, open and JavaScript-off', () => {
+  const line = ['playing', 'uYYlD1_W1Mo', 'T', 'A', '', '3768552', '2446.07', 'LIKE', 'https://i.ytimg.com/vi/x/sddefault.jpg'].join('\t') + '\n'
   expect(parseYtm(line, 2)).toEqual({
     status: 'open', playing: true, ad: false, progressMs: 2446070, readAt: 2, player: 'YouTube Music', liked: true,
-    track: { id: 'uYYlD1_W1Mo', title: 'T', artist: 'A', album: '', durationMs: 3768552, url: 'https://music.youtube.com/watch?v=uYYlD1_W1Mo' },
+    track: { id: 'uYYlD1_W1Mo', title: 'T', artist: 'A', album: '', durationMs: 3768552, artUrl: 'https://i.ytimg.com/vi/x/sddefault.jpg', url: 'https://music.youtube.com/watch?v=uYYlD1_W1Mo' },
   })
   expect((parseYtm(line.replace('LIKE', 'INDIFFERENT'), 2) as OpenMusic).liked).toBe(false)
   // no like button on the bar: no heart
   expect('liked' in (parseYtm(line.replace('LIKE', ''), 2) as OpenMusic)).toBe(false)
-  expect(parseYtm('closed\n', 2)).toEqual({ status: 'closed' })
+  expect((parseYtm(line.replace(/\t[^\t]*\n$/, '\t\n'), 2) as OpenMusic).track!.artUrl).toBeUndefined()
+  // read only after Spotify's closed: the hint names both apps
+  expect(parseYtm('closed\n', 2)).toEqual({ status: 'closed', hint: MAC_CLOSED_HINT })
   expect(parseYtm('open\n', 2)).toEqual({ status: 'open', playing: false, ad: false, progressMs: 0, readAt: 2, player: 'YouTube Music' })
   expect(parseYtm('nojs\n', 2)).toEqual({ status: 'unsupported', hint: YTM_JS_HINT })
   expect(parseYtm('playing\tx', 2)).toBeUndefined()

@@ -1,7 +1,7 @@
 import { test, expect } from 'claude-code/testing'
 import { fakeHost } from './kit.ts'
 import { MusicReader, pickBackend, LINUX_HINT, WINDOWS_HINT } from '../hooks/music/reader.ts'
-import { OSA_READ, YTM_READ, YTM_JS_HINT } from '../hooks/music/parse.ts'
+import { OSA_READ, YTM_JS_HINT, ytmRead } from '../hooks/music/parse.ts'
 import type { Host } from '../hooks/host.ts'
 
 const BUS = 'busctl --user --json=short get-property org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player PlaybackStatus Metadata Position'
@@ -157,7 +157,7 @@ test('caps: no repeat or shuffle over MPRIS; AppleScript has both; playerctl can
 
 test('osascript: with Spotify closed it reads YouTube Music in Chrome, and commands then go to that tab', async () => {
   const ytmLine = ['playing', 'vid', 'T', 'A', '', '9000', '1.5', 'INDIFFERENT', ''].join('\t')
-  const f = fakeHost({ runs: { [`osascript -e ${OSA_READ}`]: { exitCode: 0, stdout: 'closed\n' }, [`osascript -e ${YTM_READ}`]: { exitCode: 0, stdout: ytmLine } } })
+  const f = fakeHost({ runs: { [`osascript -e ${OSA_READ}`]: { exitCode: 0, stdout: 'closed\n' }, [`osascript -e ${ytmRead(0)}`]: { exitCode: 0, stdout: '42\t' + ytmLine } } })
   const r = new MusicReader('osascript', 'mac')
   const m = await r.read(f.host, 0)
   expect(m).toMatchObject({ status: 'open', player: 'YouTube Music', liked: false, track: { id: 'vid', title: 'T' } })
@@ -167,6 +167,8 @@ test('osascript: with Spotify closed it reads YouTube Music in Chrome, and comma
   expect(next.indexOf('is running')).toBeLessThan(next.indexOf('run script'))
   expect(next).toContain('music.youtube.com')
   expect(next).toContain(".next-button button')")
+  // the commands, and the next read, prefer the tab the read showed
+  expect(next).toContain('= \\"42\\" then')
   expect(r.argvFor({ cmd: 'like', on: true })!.join(' ')).toContain('!==true')
   expect(r.argvFor({ cmd: 'seek', ms: 61_000 })!.join(' ')).toContain('currentTime=61.000')
   expect(r.argvFor({ cmd: 'shuffle', on: true })).toBeUndefined()
@@ -177,6 +179,6 @@ test('osascript: with Spotify closed it reads YouTube Music in Chrome, and comma
 })
 
 test('osascript: YouTube Music with Chrome JavaScript off reads as the hint', async () => {
-  const f = fakeHost({ runs: { [`osascript -e ${OSA_READ}`]: { exitCode: 0, stdout: 'closed\n' }, [`osascript -e ${YTM_READ}`]: { exitCode: 0, stdout: 'nojs\n' } } })
+  const f = fakeHost({ runs: { [`osascript -e ${OSA_READ}`]: { exitCode: 0, stdout: 'closed\n' }, [`osascript -e ${ytmRead(0)}`]: { exitCode: 0, stdout: 'nojs\n' } } })
   expect(await new MusicReader('osascript', 'mac').read(f.host, 0)).toEqual({ status: 'unsupported', hint: YTM_JS_HINT })
 })

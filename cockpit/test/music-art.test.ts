@@ -65,6 +65,8 @@ test('YouTube Music covers: a BMP is averaged down from its middle square, past 
 test('YouTube Music covers: only https Google image hosts, and the URL is an argument, not script', () => {
   expect(isYtmArt('https://i.ytimg.com/vi/x/sddefault.jpg')).toBe(true)
   expect(isYtmArt('https://lh3.googleusercontent.com/abc=w544-h544')).toBe(true)
+  expect(isYtmArt('https://yt3.googleusercontent.com/abc=w544-h544')).toBe(true)
+  expect(isYtmArt('https://evil.googleusercontent.com/x')).toBe(false)
   expect(isYtmArt('http://i.ytimg.com/vi/x/sddefault.jpg')).toBe(false)
   expect(isYtmArt('https://i.ytimg.com.evil.test/x')).toBe(false)
   expect(isYtmArt('https://i.scdn.co/image/x')).toBe(false)

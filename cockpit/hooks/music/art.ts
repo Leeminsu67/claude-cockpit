@@ -12,9 +12,9 @@ export function smallArtUrl(url: string): string {
 
 // YouTube Music's covers sit on Google's image servers, which glowup's helper does not fetch from. On macOS curl
 // fetches them and sips writes a BMP; the URL reaches the script as $1, never inside it.
-const YTM_ART_HOSTS = new Set(['i.ytimg.com', 'lh3.googleusercontent.com', 'yt3.ggpht.com'])
+const YTM_ART_HOST = /^(i\d?\.ytimg\.com|(lh|yt)\d\.(googleusercontent|ggpht)\.com)$/
 export function isYtmArt(url: string): boolean {
-  try { const u = new URL(url); return u.protocol === 'https:' && YTM_ART_HOSTS.has(u.hostname) } catch { return false }
+  try { const u = new URL(url); return u.protocol === 'https:' && YTM_ART_HOST.test(u.hostname) } catch { return false }
 }
 const YTM_ART_SH = [
   'd=$(mktemp -d) || exit 1',

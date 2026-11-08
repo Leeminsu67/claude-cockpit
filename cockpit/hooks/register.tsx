@@ -163,6 +163,8 @@ let remotePolling = false
 // The local Spotify player. One poll loop: each pollMusic bumps musicSeq, and a read that
 // returns after a newer poll started drops its answer, so a control click cannot fork the loop.
 let musicReader: MusicReader | undefined
+// set from startMusic to stopMusic, so a second start (a surface attaching to a REPL) does not fork the poll
+let musicOn = false
 let musicTimer: Timer | undefined
 let musicSeq = 0
 // Covers by "size:url". The helper binary is looked up once per session for art: a missing one stays missing
@@ -648,6 +650,7 @@ function pickRow($: Engine, value: string) {
 }
 
 async function startMusic($: Engine) {
+  musicOn = true
   covers = new ArtCache(20); coversInFlight = new Set(); artBin = undefined
   localMusic = { status: 'closed' }; premiumToasted = false; connectFlow = undefined
   const platform = await musicPlatform($)
@@ -656,6 +659,7 @@ async function startMusic($: Engine) {
   void pollMusic($)
 }
 function stopMusic($: Engine) {
+  musicOn = false
   musicSeq++; musicTimer?.cancel(); musicTimer = undefined; musicReader = undefined
   stopApi()
   stopLists()
@@ -1775,6 +1779,12 @@ export const register: Register = (on, options) => {
     // one more redraw after the linger so the band folds away
     $.clock.after(1600, () => publish($))
     return r
+  })
+
+  // The SDK (Wagle Deck, say) starts with nothing to draw on and isInteractive false, so music waits for a surface to attach.
+  on('session.attach', async ($, e, next) => {
+    if (!off && !musicOn) void startMusic($)
+    return next(e)
   })
 
   on('session.compact', async ($, e, next) => {

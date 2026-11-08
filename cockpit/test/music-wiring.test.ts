@@ -69,6 +69,26 @@ test('Spotify closed: the tab says so and the pet does not dance', { timeoutMs: 
   await pane.unmount()
 })
 
+test('the SDK starts with no surface: music waits for one to attach, and a second client does not start it again', { timeoutMs: 20000 }, async ($, on) => {
+  const { ran } = boot(on, {}, { ...LINUX_BUS, [BUS]: ok(PLAYING) })
+  on('session.attach', async (_$: unknown, e: any) => ({ clientId: e.clientId }) as never)
+  const clock = mock.clock(on)
+  await $.session.start({ cwd: '/r', surface: null, isInteractive: false })
+  await clock.advance(50)
+  expect(reads(ran)).toBe(0)
+  await $.session.attach({ surface: 'desktop', clientId: 'desktop:default' })
+  await clock.advance(50)
+  expect(reads(ran)).toBe(1)
+  await $.session.attach({ surface: 'mobile', clientId: 'mobile:default' })
+  await clock.advance(50)
+  expect(reads(ran)).toBe(1)
+  const pane = await mountPane($, 'desktop')
+  await pane.press({ key: 'tab-music' })
+  await clock.advance(50)
+  expect(text(await pane.drawn())).toContain('Song')
+  await pane.unmount()
+})
+
 test('a press during a read leaves one poll loop', { timeoutMs: 20000 }, async ($, on) => {
   const { ran } = boot(on, {}, { ...LINUX_BUS, [BUS]: ok(PLAYING), [PLAY_PAUSE]: ok() })
   const clock = mock.clock(on)

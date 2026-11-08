@@ -170,23 +170,40 @@ export const YTM_JS_CMD = {
   like: (on: boolean) => `(()=>{const b=document.querySelector('${YTM_BAR} #like-button-renderer');if(b&&(b.getAttribute('like-status')==='LIKE')!==${on})b.querySelector('#button-shape-like button').click()})()`,
 }
 
-// body runs on the first music.youtube.com tab as window w and tab t. URL of tabs of windows is one Apple Event,
-// not one a tab. Kept inside run script behind the is running check, like Spotify's, so it never launches Chrome.
-export function ytmScript(body: string[], none: string): string {
+const YTM_PLAYING_JS = `(()=>{const v=document.querySelector('video');return !!v&&!v.paused})()`
+// body runs as window w and tab t on the first music.youtube.com tab that is playing, else the tab with id keep (the
+// one the last read showed, so a pause does not hand the player to another tab), else the first. URL and id of tabs
+// of windows are one Apple Event each, not one a tab. Kept inside run script behind the is running check, like
+// Spotify's, so it never launches Chrome.
+export function ytmScript(body: string[], none: string, keep = 0): string {
   return [
     'if application "Google Chrome" is running then',
     `  return run script ${osaGuarded([
       'tell application "Google Chrome"',
       '  set us to URL of tabs of windows',
+      '  set ids to id of tabs of windows',
+      '  set w to missing value',
+      '  set found to false',
       '  repeat with i from 1 to count us',
       '    repeat with j from 1 to count item i of us',
-      '      if item j of item i of us starts with "https://music.youtube.com/" then',
-      '        set w to window i',
-      '        set t to tab j of w',
-      ...body.map(l => '        ' + l),
+      '      if not found and item j of item i of us starts with "https://music.youtube.com/" then',
+      // Chrome's tab id is text
+      `        if w is missing value or item j of item i of ids = "${Math.trunc(keep)}" then`,
+      '          set w to window i',
+      '          set t to tab j of w',
+      '        end if',
+      '        try',
+      `          if (execute tab j of window i javascript "${YTM_PLAYING_JS}") is true then`,
+      '            set found to true',
+      '            set w to window i',
+      '            set t to tab j of w',
+      '          end if',
+      '        end try',
       '      end if',
       '    end repeat',
       '  end repeat',
+      `  if w is missing value then return "${none}"`,
+      ...body.map(l => '  ' + l),
       'end tell',
       `return "${none}"`,
     ].join('\n'))}`,
@@ -194,9 +211,14 @@ export function ytmScript(body: string[], none: string): string {
     `return "${none}"`,
   ].join('\n')
 }
-// error 12 is Chrome's answer while Allow JavaScript from Apple Events is off
-const ytmJs = (js: string) => ['try', `  return execute t javascript "${js}"`, 'on error number 12', '  return "nojs"', 'end try']
-export const YTM_READ = ytmScript(ytmJs(YTM_JS), 'closed')
+// The read prints the tab's id, a tab, then the page's line. error 12 is Chrome's answer while Allow JavaScript
+// from Apple Events is off.
+export const ytmRead = (keep: number) => ytmScript(['try', `  return ((id of t) as string) & (character id 9) & (execute t javascript "${YTM_JS}")`, 'on error number 12', '  return "nojs"', 'end try'], 'closed', keep)
+// the tab id ytmRead put first, and the rest for parseYtm
+export function splitYtmTab(stdout: string): { tab?: number; rest: string } {
+  const m = /^(\d+)\t/.exec(stdout)
+  return m ? { tab: Number(m[1]), rest: stdout.slice(m[0].length) } : { rest: stdout }
+}
 
 export function parseYtm(stdout: string, readAt: number): Music | undefined {
   const s = stdout.replace(/\n$/, '')

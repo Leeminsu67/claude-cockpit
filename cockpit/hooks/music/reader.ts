@@ -1,5 +1,5 @@
 import type { Host } from '../host.ts'
-import { LOOP_STATUS, OSA_READ, PLAYERCTL_EXTRAS_FORMAT, PLAYERCTL_FORMAT, YTM_JS_CMD, YTM_READ, osaGuarded, parseBusctl, parseBusctlExtras, parseOsascript, parsePlayerctl, parsePlayerctlExtras, parseYtm, ytmScript, type Music, type MusicCmd, type Repeat } from './parse.ts'
+import { LOOP_STATUS, OSA_READ, PLAYERCTL_EXTRAS_FORMAT, PLAYERCTL_FORMAT, YTM_JS_CMD, osaGuarded, parseBusctl, parseBusctlExtras, parseOsascript, parsePlayerctl, parsePlayerctlExtras, parseYtm, splitYtmTab, ytmRead, ytmScript, type Music, type MusicCmd, type Repeat } from './parse.ts'
 
 export type Platform = 'linux' | 'mac' | 'windows'
 export type Backend = 'busctl' | 'playerctl' | 'osascript'
@@ -37,6 +37,8 @@ export class MusicReader {
   private last: Music = { status: 'closed' }
   // on mac: the last read found YouTube Music in Chrome, not Spotify, so commands go there
   private ytm = false
+  // Chrome's id of the tab the last YouTube Music read showed; 0 is none
+  private ytmTab = 0
   constructor(private backend: Backend | undefined, private platform: Platform) {}
 
   async read(host: Host, now: number): Promise<Music> {
@@ -72,9 +74,11 @@ export class MusicReader {
     if (!m) return undefined
     if (m.status !== 'closed') { this.ytm = false; return m }
     // Spotify is not running: YouTube Music, if a Chrome tab has it
-    const y = await host.run(['osascript', '-e', YTM_READ], undefined, RUN_MS)
-    const ym = y.exitCode !== 0 ? undefined : parseYtm(y.stdout, now)
-    if (ym) this.ytm = ym.status === 'open'
+    const y = await host.run(['osascript', '-e', ytmRead(this.ytmTab)], undefined, RUN_MS)
+    if (y.exitCode !== 0) return undefined
+    const { tab, rest } = splitYtmTab(y.stdout)
+    const ym = parseYtm(rest, now)
+    if (ym) { this.ytm = ym.status === 'open'; if (tab) this.ytmTab = tab }
     return ym
   }
 
@@ -114,12 +118,12 @@ export class MusicReader {
       }
     }
     if (this.backend === 'osascript' && this.ytm) {
-      if (c.cmd === 'raise') return ['osascript', '-e', ytmScript(['set index of w to 1', 'activate', 'return ""'], '')]
+      if (c.cmd === 'raise') return ['osascript', '-e', ytmScript(['set index of w to 1', 'activate', 'return ""'], '', this.ytmTab)]
       const js = c.cmd === 'playpause' || c.cmd === 'next' || c.cmd === 'previous' ? YTM_JS_CMD[c.cmd]
         : c.cmd === 'seek' ? YTM_JS_CMD.seek(secs(c.ms))
         : c.cmd === 'like' ? YTM_JS_CMD.like(c.on)
         : undefined
-      return js ? ['osascript', '-e', ytmScript([`execute t javascript "${js}"`, 'return ""'], '')] : undefined
+      return js ? ['osascript', '-e', ytmScript([`execute t javascript "${js}"`, 'return ""'], '', this.ytmTab)] : undefined
     }
     if (this.backend === 'osascript') {
       const verb = c.cmd === 'playpause' || c.cmd === 'next' || c.cmd === 'previous' ? OSA_CMD[c.cmd]

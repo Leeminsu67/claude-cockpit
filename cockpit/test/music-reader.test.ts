@@ -156,7 +156,7 @@ test('caps: no repeat or shuffle over MPRIS; AppleScript has both; playerctl can
 })
 
 test('osascript: with Spotify closed it reads YouTube Music in Chrome, and commands then go to that tab', async () => {
-  const ytmLine = ['playing', 'vid', 'T', 'A', '', '9000', '1.5', 'INDIFFERENT'].join('\t')
+  const ytmLine = ['playing', 'vid', 'T', 'A', '', '9000', '1.5', 'INDIFFERENT', ''].join('\t')
   const f = fakeHost({ runs: { [`osascript -e ${OSA_READ}`]: { exitCode: 0, stdout: 'closed\n' }, [`osascript -e ${YTM_READ}`]: { exitCode: 0, stdout: ytmLine } } })
   const r = new MusicReader('osascript', 'mac')
   const m = await r.read(f.host, 0)

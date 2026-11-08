@@ -52,7 +52,7 @@ import { allowed, createRun, isLive, isUndo, newLines, restoreUndo, runTimes, sc
 import { renderPlayer, playerCoverSize, PLAYER_ID, PASTE_INPUT, type AccountView, type PlayerNote } from './musicplayer.tsx'
 import { sameMusic, type Music, type MusicCmd } from './music/parse.ts'
 import { MusicReader, pickBackend, type Platform } from './music/reader.ts'
-import { ArtCache, coverRows, parseArt, smallArtUrl } from './music/art.ts'
+import { ArtCache, bmpCover, coverRows, isYtmArt, parseArt, smallArtUrl, ytmArtArgv, type Art } from './music/art.ts'
 import type { SeekBarProps } from './music/seek.ts'
 import { TokenKeeper, pasteFile, readTokens, tokenFile } from './music/tokens.ts'
 import { SpotifyClient, allPlaylists, readPlayer, skipTo } from './music/spotify.ts'
@@ -682,13 +682,19 @@ function fetchCover($: Engine, url: string, size: number) {
   coversInFlight.add(key)
   void (async () => {
     try {
-      const bin = await helperPath($)
-      if (!bin) { covers.set(key, null); return }
-      const r = await hostOf($).run([bin, 'spotify-art', '--size', String(size), smallArtUrl(url)], undefined, 15_000)
-      // exit 2 is a usage error: a helper from before spotify-art, which will refuse every cover
-      if (r.exitCode === 2) artBin = Promise.resolve(undefined)
-      // parseArt has already checked rgb holds w*h*3 bytes
-      const art = r.exitCode === 0 ? parseArt(r.stdout) : undefined
+      let art: Art | undefined
+      if (isYtmArt(url)) {
+        const r = await hostOf($).run(ytmArtArgv(url), undefined, 15_000)
+        art = r.exitCode === 0 ? bmpCover(r.stdout, size) : undefined
+      } else {
+        const bin = await helperPath($)
+        if (!bin) { covers.set(key, null); return }
+        const r = await hostOf($).run([bin, 'spotify-art', '--size', String(size), smallArtUrl(url)], undefined, 15_000)
+        // exit 2 is a usage error: a helper from before spotify-art, which will refuse every cover
+        if (r.exitCode === 2) artBin = Promise.resolve(undefined)
+        // parseArt has already checked rgb holds w*h*3 bytes
+        art = r.exitCode === 0 ? parseArt(r.stdout) : undefined
+      }
       covers.set(key, art && art.w === size && art.h === size ? coverRows(art) : null)
       if (!off) publish($)
     } catch { covers.set(key, null) } finally { coversInFlight.delete(key) }

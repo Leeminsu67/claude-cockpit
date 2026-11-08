@@ -14,7 +14,8 @@ export type OpenMusic = {
   // the app's name in the header when it is not Spotify
   player?: string
 }
-export type Music = { status: 'closed' } | { status: 'unsupported'; hint: string } | OpenMusic
+// hint is what to open, when the reader has a word for it beyond Spotify
+export type Music = { status: 'closed'; hint?: string } | { status: 'unsupported'; hint: string } | OpenMusic
 export type MusicCmd =
   | { cmd: 'playpause' | 'next' | 'previous' | 'raise' }
   | { cmd: 'seek'; ms: number }
@@ -152,12 +153,13 @@ export function parseOsascript(stdout: string, readAt: number): Music | undefine
 // YouTube Music: a tab of Google Chrome, its installed app included. Chrome runs this JavaScript in an isolated
 // world, so the page's player API is out of reach; the <video>, mediaSession and the player bar's buttons are not.
 export const YTM_PLAYER = 'YouTube Music'
+export const MAC_CLOSED_HINT = "Open Spotify or YouTube Music to see what's playing."
 export const YTM_JS_HINT = 'YouTube Music을 보려면 Chrome 메뉴 보기 > 개발자 > Apple 이벤트의 자바스크립트 허용을 켜세요.'
 const YTM_BAR = 'ytmusic-player-bar'
 // The JavaScript sits inside an AppleScript string, so it uses single quotes and no backslashes.
 const YTM_JS = `(()=>{const v=document.querySelector('video'),m=navigator.mediaSession.metadata;if(!v||!m)return 'open';`
   + `const l=document.querySelector('${YTM_BAR} #like-button-renderer');`
-  + `return [v.paused?'paused':'playing',new URL(location.href).searchParams.get('v')||'',m.title,m.artist,m.album,Math.round((v.duration||0)*1000),v.currentTime,l?l.getAttribute('like-status')||'':''].join(String.fromCharCode(9))})()`
+  + `return [v.paused?'paused':'playing',new URL(location.href).searchParams.get('v')||'',m.title,m.artist,m.album,Math.round((v.duration||0)*1000),v.currentTime,l?l.getAttribute('like-status')||'':'',(m.artwork[m.artwork.length-1]||{}).src||''].join(String.fromCharCode(9))})()`
 const ytmClick = (sel: string) => `document.querySelector('${YTM_BAR} ${sel}').click()`
 export const YTM_JS_CMD = {
   playpause: ytmClick('.play-pause-button button'),
@@ -198,12 +200,13 @@ export const YTM_READ = ytmScript(ytmJs(YTM_JS), 'closed')
 
 export function parseYtm(stdout: string, readAt: number): Music | undefined {
   const s = stdout.replace(/\n$/, '')
-  if (s === 'closed') return { status: 'closed' }
+  // read only once Spotify's read was closed too, so neither app is there
+  if (s === 'closed') return { status: 'closed', hint: MAC_CLOSED_HINT }
   if (s === 'nojs') return { status: 'unsupported', hint: YTM_JS_HINT }
   if (s === 'open') return { status: 'open', playing: false, ad: false, progressMs: 0, readAt, player: YTM_PLAYER }
   const f = s.split('\t')
-  if (f.length !== 8) return undefined
-  const m = open(f[0]!, f[1]!, f[2]!, f[3]!, f[4]!, Number(f[5]) || 0, (Number(f[6]) || 0) * 1000, readAt, { url: f[1] ? `https://music.youtube.com/watch?v=${f[1]}` : undefined })
+  if (f.length !== 9) return undefined
+  const m = open(f[0]!, f[1]!, f[2]!, f[3]!, f[4]!, Number(f[5]) || 0, (Number(f[6]) || 0) * 1000, readAt, { artUrl: f[8], url: f[1] ? `https://music.youtube.com/watch?v=${f[1]}` : undefined })
   // like-status is LIKE, DISLIKE or INDIFFERENT, and empty when the bar has no like button
   return { ...m, player: YTM_PLAYER, ...(f[7] && { liked: f[7] === 'LIKE' }) }
 }
@@ -219,7 +222,8 @@ export const progressAt = (m: OpenMusic, now: number): number => extrapolate(m.p
 export function sameMusic(a: Music | undefined, b: Music, now: number): boolean {
   if (!a || a.status !== b.status) return false
   if (a.status === 'unsupported') return b.status === 'unsupported' && a.hint === b.hint
-  if (a.status === 'closed' || b.status !== 'open') return true
+  if (a.status === 'closed') return b.status === 'closed' && a.hint === b.hint
+  if (b.status !== 'open') return true
   const o = a as OpenMusic
   return o.playing === b.playing && o.ad === b.ad && o.shuffle === b.shuffle && o.repeat === b.repeat && o.volume === b.volume
     && o.source === b.source && o.liked === b.liked && o.upNext?.uri === b.upNext?.uri && JSON.stringify(o.device) === JSON.stringify(b.device)

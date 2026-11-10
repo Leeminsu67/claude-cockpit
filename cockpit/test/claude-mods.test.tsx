@@ -4,7 +4,7 @@ import type { TestBody } from 'claude-code/testing'
 
 import { fakeFs } from './kit.ts'
 import { BOARD_SPEC } from '../hooks/board.tsx'
-import { fit, pair, tags } from '../hooks/images.tsx'
+import { fit, pngsOf, tags } from '../hooks/images.tsx'
 import { isNewer, upstreamText } from '../hooks/upstream.ts'
 
 const TOOL = 'mcp__cockpit__progress'
@@ -154,11 +154,10 @@ test('한국어 질문 카드 검사를 끄면 영어 질문도 통과한다', {
   expect((await ask($, 'Which database?', 'Most popular')).deny).toBeUndefined()
 })
 
-test('이미지 미리보기: 붙여 넣은 순서대로 짝짓고 비율을 지켜 줄인다', () => {
+test('이미지 미리보기: [Image #N]을 Claude Code가 세션 폴더에 쓴 N.png와 짝짓고 비율을 지켜 줄인다', () => {
   expect(tags('가 [Image #6] 나 [Image #7]')).toEqual([6, 7])
-  expect(pair([7, 6], [{ path: '/t/b.png', at: 2 }, { path: '/t/a.png', at: 1 }])).toEqual([[6, '/t/a.png'], [7, '/t/b.png']])
-  // 파일이 모자라면 가장 최근 번호에 가장 최근 파일을 준다
-  expect(pair([6, 7], [{ path: '/t/b.png', at: 2 }])).toEqual([[7, '/t/b.png']])
+  // PNG가 아닌 4.jpg는 그리지 않고, 13.png를 3번으로 잘못 고르지 않는다
+  expect(pngsOf([3, 4, 5], '/d', ['13.png', '3.png', '4.jpg'])).toEqual([[3, '/d/3.png']])
   // 1600×1000 이미지를 14칸×5줄 안에: 세로가 먼저 찬다
   expect(fit({ path: '', width: 1600, height: 1000 }, 14, 5)).toEqual({ columns: 14, rows: 4 })
   expect(fit({ path: '', width: 1000, height: 1000 }, 40, 10)).toEqual({ columns: 20, rows: 10 })

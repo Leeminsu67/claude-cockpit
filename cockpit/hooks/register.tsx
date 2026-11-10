@@ -145,7 +145,7 @@ let installed: number | undefined
 let lastPet = ''
 let eggJuggleAt: number | undefined
 let clickToasted = false
-const PANE_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit', focus: true, closeOnEscape: true } // claude-mods: 패널 제목 cockpit (id는 그대로)
+const PANE_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit', focus: true, closeOnEscape: true, backgroundColor: 'transparent' } // claude-mods: 패널 제목 cockpit (id는 그대로), 바탕 투명(터미널 배경 그림이 비치게)
 const CONFIG_ID = 'glowup-config'
 const CONFIG_OPEN: PaneOpenArgs = { id: CONFIG_ID, title: 'glowup config', focus: true, closeOnEscape: true, rows: 40 }
 // Read when the config pane opens and after each pack change: its render hook may not read disk.
@@ -204,7 +204,7 @@ let listsDrawn: Lists | undefined
 const CLIENT_ID = /^[0-9a-f]{32}$/
 // the plugin's userConfig, kept for loadSettings: an undo reloads settings outside register()
 let pluginOptions: Readonly<Record<string, unknown>> = {}
-const DOCK_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit' } // claude-mods: 패널 제목 cockpit (id는 그대로)
+const DOCK_OPEN: PaneOpenArgs = { id: 'glowup', title: 'cockpit', backgroundColor: 'transparent' } // claude-mods: 패널 제목 cockpit (id는 그대로), 바탕 투명(터미널 배경 그림이 비치게)
 const PLAYER_OPEN: PaneOpenArgs = { id: PLAYER_ID, title: 'Music', focus: true, closeOnEscape: true, holdToasts: true, rows: 24, columns: 110 }
 // open({ focus }) is refused while the glowup pane holds the keys, so a press there closes the pane first;
 // the dialog's close then reopens it with the keys.

@@ -55,7 +55,7 @@ claude plugin update cockpit@claude-cockpit
 
 | glowup에서 온 기능 | 하는 일 |
 |---|---|
-| 오른쪽 패널 | `Plan & context`, `Agents`, `Diff`, `Changes`, `Music` 탭으로 계획, 컨텍스트 사용량, 하위 에이전트, 바뀐 파일, 음악을 보여 줍니다 |
+| 오른쪽 패널 | `Plan & context`, `Agents`, `Diff`, `Changes`, `Music` 탭으로 계획, 컨텍스트 사용량, 하위 에이전트, 바뀐 파일, 음악을 보여 줍니다. 패널 바탕은 칠하지 않아서 터미널 배경 그림이 뒤로 비칩니다 |
 | 입력창 위 띠 | 연속 성공 횟수, 하위 에이전트, 사용량, 계획 진행을 한 줄로 보여 줍니다 |
 | 펫 | 패널 아래에서 작업 상태에 따라 움직이고, 레벨이 오르면 옷이 풀립니다. 하트는 5시간 한도와 주간 한도 중 더 빠듯한 쪽의 남은 양입니다 |
 | 테마·팩·상태줄 | `/cockpit theme`, `/cockpit pack`, `/cockpit statusline on` 등으로 바꿉니다 |

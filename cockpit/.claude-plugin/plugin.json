@@ -1,6 +1,6 @@
 {
   "name": "cockpit",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "A glow-up for Claude Code: a cockpit pane for changes, subagents and context, an activity band, and shareable themes.",
   "author": {
     "name": "Aliasgar Khimani",

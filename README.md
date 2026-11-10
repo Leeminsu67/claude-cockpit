@@ -119,6 +119,28 @@ Claude가 질문 카드(AskUserQuestion)를 띄울 때 질문이나 선택지 �
 - 입력창에서 `[Image #N]`을 지우면 카드도 사라지고, 보내면 비워집니다
 - 썸네일과 큰 미리보기 모두 원본 비율을 지킵니다
 
+#### Herdr에서 쓰려면
+
+Herdr 터미널에서는 아래 두 가지가 모두 있어야 그림이 보입니다. Herdr 쪽에서 바꿀 설정은 없습니다.
+
+1. **cockpit 2.5.2 이상**: 2.5.1까지는 그림을 파일 경로로 보냈는데, Herdr는 그렇게 보낸 그림을 그리지 않습니다([herdr-app#302](https://github.com/herdrdev/herdr-app/issues/302)). 2.5.2부터는 바이트로 보냅니다. [업데이트](#업데이트) 뒤 `/reload-plugins`
+2. **`~/.claude/settings.json`에 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES`**: Herdr는 Ghostty 기반이지만 터미널 이름을 `libghostty`로 답해서, Claude Code가 그림 기능을 끕니다([herdr-app#789](https://github.com/herdrdev/herdr-app/issues/789)). 맥마다 한 번 넣고 Claude Code를 새로 실행합니다
+
+   ```json
+   {
+     "env": {
+       "CLAUDE_CODE_FORCE_TERMINAL_IMAGES": "1"
+     }
+   }
+   ```
+
+| 보이는 모습 | 빠진 것 |
+|---|---|
+| 카드 안에 그림 대신 흐린 `#N` 글자 | 2번 설정 |
+| 카드 테두리만 있고 안이 비어 있음 | 1번 업데이트 |
+
+Herdr.app 0.1.14, herdr-core 0.1.19, Claude Code 2.1.322에서 확인했습니다.
+
 ### 4. `/cockpit update`
 
 바탕이 된 glowup(NovusEdge/glowup)의 최신 릴리스를 확인해, 이 저장소에 합쳐 둔 버전보다 새로우면 알려 줍니다. 명령을 입력할 때만 확인합니다.
@@ -168,7 +190,7 @@ glowup 새 버전 v1.3.0이 나왔습니다(지금 합친 버전 1.2.0). Claude�
 |---|---|
 | Claude Code | 2.1.287 이상 (2.1.316에서 만들고 확인) |
 | 화면 모드 | 전체 화면 모드(`"tui": "fullscreen"`). 오른쪽 패널은 터미널이 144칸 이상이면 저절로 열리고, 한 번 연 뒤로는 110칸부터 열립니다. 좁으면 `/cockpit pane`으로 엽니다 |
-| 이미지 미리보기 | **Orca** 터미널. Orca의 에이전트 실행 기능으로 띄우면 그대로 되고, 셸에서 `claude`를 직접 실행하면 아래 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` 설정이 필요합니다 |
+| 이미지 미리보기 | Claude Code가 그림을 켜는 터미널(Ghostty·kitty). Herdr 등 그 밖의 터미널은 아래 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` 설정이 필요합니다 |
 
 ## 함께 켜면 좋은 설정
 
@@ -184,7 +206,7 @@ mod에 들어 있지 않은 설정이라 `~/.claude/settings.json`에 맥마다 
 }
 ```
 
-- `CLAUDE_CODE_FORCE_TERMINAL_IMAGES`: 터미널 이름과 상관없이 그림을 켭니다. Orca 셸에서 `claude`를 직접 실행할 때 이미지 미리보기에 필요합니다. 그림을 못 그리는 터미널(VS Code 터미널, macOS 기본 터미널 등)에서도 켜지므로, 그런 곳에서 화면에 이상한 글자가 보이면 빼세요
+- `CLAUDE_CODE_FORCE_TERMINAL_IMAGES`: 터미널 이름과 상관없이 그림을 켭니다. Ghostty·kitty가 아닌 터미널에서 이미지 미리보기에 필요합니다. 그림을 못 그리는 터미널(VS Code 터미널, macOS 기본 터미널 등)에서도 켜지므로, 그런 곳에서 화면에 이상한 글자가 보이면 빼세요
 - `language`: 모든 프로젝트에서 Claude가 한국어로 답합니다
 - `theme`: 터미널 바탕이 어두우면 `dark`로 맞춥니다. 밝은 테마로 두면 오른쪽 패널 바탕이 흰색으로 나옵니다
 
@@ -194,11 +216,12 @@ mod에 들어 있지 않은 설정이라 `~/.claude/settings.json`에 맥마다 
 - glowup에서 온 화면 글(탭 이름, `CONTEXT`, 도움말 등)은 원래대로 영어이고, 도움말 속 명령은 `/glowup`으로 적혀 있습니다
 - 사용자 팩·펫·테마 폴더는 glowup과 같은 `~/.claude/glowup/`을 씁니다
 - 권한 확인 창, 질문 카드의 `Other` 버튼처럼 Claude Code가 직접 그리는 화면은 한국어로 바꿀 수 없습니다
-- 이미지 미리보기는 Orca 전용입니다
+- 이미지 미리보기
   - Claude Code가 입력 중인 이미지의 파일 위치를 mod에 알려 주지 않습니다
-  - 그래서 Orca가 붙여 넣을 때마다 임시 폴더에 만드는 `orca-paste-*.png` 파일을 시각 순서로 짝짓습니다
-  - PNG만 되고, 붙여 넣은 지 1분이 넘은 파일은 짝짓지 않습니다
-  - Claude Code는 터미널 이름이 kitty나 Ghostty일 때만 그림을 켭니다. Orca는 여기에 해당하지 않아서 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1`이 없으면 그림 대신 `#N` 글자가 나옵니다([함께 켜면 좋은 설정](#함께-켜면-좋은-설정))
+  - 그래서 Claude Code가 붙여 넣는 순간 세션 임시 폴더(`<CLAUDE_CODE_TMPDIR 또는 /tmp>/claude-<uid>/<프로젝트>/<세션 id>/images/<N>.png`)에 쓰는 파일을 `[Image #N]` 번호로 짝짓습니다. Claude Code 내부 규칙이라 버전이 바뀌면 깨질 수 있습니다
+  - PNG만 됩니다. 끌어다 놓은 JPEG·GIF는 썸네일이 없습니다
+  - Claude Code는 터미널 이름이 kitty나 Ghostty일 때만 그림을 켭니다. 다른 터미널은 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1`이 없으면 그림 대신 `#N` 글자가 나옵니다([함께 켜면 좋은 설정](#함께-켜면-좋은-설정)). Herdr는 Ghostty 기반이지만 이름을 `libghostty`로 답해 여기에 걸립니다(herdr-app#789)
+  - 그림은 파일 경로가 아니라 바이트로 보냅니다. Herdr가 파일 경로로 보낸 그림을 그리지 않기 때문입니다(herdr-app#302). 2MiB가 넘는 그림은 보낼 수 없습니다
 - 그림 자체는 누를 수 없어서 아래의 `#N` 버튼으로 엽니다
 - 보낸 메시지에는 지금처럼 `[Image #N]` 글자로만 남습니다
 
